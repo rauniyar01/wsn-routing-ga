@@ -58,6 +58,18 @@ class NetworkExporter
             );
         }
 
+//        foreach ($network->getClusterHeads() as $node) {
+//            $this->addExpression(
+//                sprintf(
+//                    "plot([%s %s], [%s %s], '--k', 'LineWidth', 0.1)",
+//                    $this->convertCoordinate($node->getX()),
+//                    $this->convertCoordinate($baseStation->getX()),
+//                    $this->convertCoordinate($node->getY()),
+//                    $this->convertCoordinate($baseStation->getY())
+//                )
+//            );
+//        }
+
         foreach ($network->getClusterNodes() as $node) {
             $this->addExpression(
                 sprintf(
@@ -67,15 +79,15 @@ class NetworkExporter
                 )
             );
 
-            $this->addExpression(
-                sprintf(
-                    "plot([%s %s], [%s %s], '-b')",
-                    $this->convertCoordinate($node->getX()),
-                    $this->convertCoordinate($node->getClusterHead()->getX()),
-                    $this->convertCoordinate($node->getY()),
-                    $this->convertCoordinate($node->getClusterHead()->getY())
-                )
-            );
+//            $this->addExpression(
+//                sprintf(
+//                    "plot([%s %s], [%s %s], '--b', 'LineWidth', 0.1)",
+//                    $this->convertCoordinate($node->getX()),
+//                    $this->convertCoordinate($node->getClusterHead()->getX()),
+//                    $this->convertCoordinate($node->getY()),
+//                    $this->convertCoordinate($node->getClusterHead()->getY())
+//                )
+//            );
         }
 
         $this->addExpression('hold off');
