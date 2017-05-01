@@ -6,7 +6,7 @@ use Assert\Assertion;
 
 class RandomNetworkBuilder implements NetworkBuilder
 {
-    const CLUSTER_HEADS_PERCENT = 10;
+    const CLUSTER_HEADS_RATIO = 0.1;
 
     /**
      * {@inheritdoc}
@@ -15,16 +15,37 @@ class RandomNetworkBuilder implements NetworkBuilder
     {
         /** @var Node[] $nodes */
 
-        $nodesCount = count($nodes);
-
-        $clusterHeadsCount = ceil($nodesCount * self::CLUSTER_HEADS_PERCENT / 100);
-
-        Assertion::true($nodesCount > 0);
-        Assertion::true($clusterHeadsCount > 0);
-        Assertion::true($nodesCount >= $clusterHeadsCount);
+        Assertion::allUuid(array_keys($nodes));
         Assertion::allIsInstanceOf($nodes, Node::class);
 
-        // The first 10% of nodes is cluster heads
+        $nodes = array_filter(
+            $nodes,
+            function (Node $node) {
+                return !$node->isDead();
+            }
+        );
+
+        $nodesCount = count($nodes);
+
+        if ($nodesCount === 0) {
+            return new Network($baseStation, [], []);
+        }
+
+        $clusterHeadsCount = ceil($nodesCount * self::CLUSTER_HEADS_RATIO);
+
+        $ids = array_keys($nodes);
+
+        shuffle($ids);
+
+        $tmp = [];
+
+        foreach ($ids as $id) {
+            $tmp[$id] = $nodes[$id];
+        }
+
+        $nodes = $tmp;
+
+        // Random cluster heads
         $clusterHeads = array_slice($nodes, 0, $clusterHeadsCount);
 
         /** @var Node[] $clusterNodes */
@@ -39,8 +60,11 @@ class RandomNetworkBuilder implements NetworkBuilder
 
             $node->makeClusterNode($node->getNearestNeighbor($clusterHeads));
 
-            $clusterNodes[] = $node;
+            $clusterNodes[$node->getId()] = $node;
         }
+
+        ksort($clusterHeads);
+        ksort($clusterNodes);
 
         return new Network($baseStation, $clusterHeads, $clusterNodes);
     }

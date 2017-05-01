@@ -2,16 +2,33 @@
 
 namespace Podorozhny\Dissertation;
 
+use Symfony\Component\Finder\Finder;
+
 class NetworkExporter
 {
     /** @var string */
     private $content;
 
-    public function export(Network $network)
+    /**
+     * @param Network $network
+     * @param int     $rounds
+     * @param bool    $clear
+     *
+     * @throws \Exception
+     */
+    public function export(Network $network, int $rounds, bool $clear = false)
     {
-        $fileName = $this->getFilePath();
+        $fileName = $this->getFilePath($rounds);
 
         $directory = dirname($fileName);
+
+        if ($clear) {
+            foreach ((new Finder())->files()->in($directory) as $file) {
+                /** @var \SplFileInfo $file */
+
+                unlink($file->getRealPath());
+            }
+        }
 
         if (!is_dir($directory) && (false === @mkdir($directory, 0775, true)) || !is_writable($directory)
         ) {
@@ -55,6 +72,10 @@ class NetworkExporter
         $this->addComment('Cluster heads');
 
         foreach ($network->getClusterHeads() as $node) {
+            if ($node->isDead()) {
+                continue;
+            }
+
             $this->addExpression(
                 sprintf(
                     "plot(%s, %s, '+r')",
@@ -68,6 +89,10 @@ class NetworkExporter
 //        $this->addComment('Connections between cluster heads and base station');
 //
 //        foreach ($network->getClusterHeads() as $node) {
+//            if ($node->isDead()) {
+//                continue;
+//            }
+//
 //            $this->addExpression(
 //                sprintf(
 //                    "plot([%s %s], [%s %s], '--k', 'LineWidth', 0.1)",
@@ -83,6 +108,10 @@ class NetworkExporter
         $this->addComment('Cluster nodes');
 
         foreach ($network->getClusterNodes() as $node) {
+            if ($node->isDead()) {
+                continue;
+            }
+
             $this->addExpression(
                 sprintf(
                     "plot(%s, %s, '+b')",
@@ -96,6 +125,10 @@ class NetworkExporter
 //        $this->addComment('Connections between cluster nodes and heads');
 //
 //        foreach ($network->getClusterNodes() as $node) {
+//            if ($node->isDead()) {
+//                continue;
+//            }
+//
 //            $this->addExpression(
 //                sprintf(
 //                    "plot([%s %s], [%s %s], '--b', 'LineWidth', 0.1)",
@@ -116,9 +149,14 @@ class NetworkExporter
         return $this->content;
     }
 
-    private function getFilePath(): string
+    /**
+     * @param int $rounds
+     *
+     * @return string
+     */
+    private function getFilePath(int $rounds): string
     {
-        return __DIR__ . '/../var/matlab/plot_network.m';
+        return __DIR__ . sprintf('/../var/matlab/plot_network_%d_rounds.m', $rounds);
     }
 
     /**

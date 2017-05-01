@@ -19,8 +19,8 @@ class Network
 
     public function __construct(BaseStation $baseStation, array $clusterHeads, array $clusterNodes)
     {
-        Assertion::true(count($clusterHeads) > 0);
-        Assertion::true(count($clusterNodes) > 0);
+        Assertion::allUuid(array_keys($clusterHeads));
+        Assertion::allUuid(array_keys($clusterNodes));
         Assertion::allIsInstanceOf($clusterHeads, Node::class);
         Assertion::allIsInstanceOf($clusterNodes, Node::class);
 
@@ -66,7 +66,19 @@ class Network
      */
     public function isAlive(): bool
     {
-        return $this->getDeadNodesCount() / $this->getNodesCount() <= self::DEAD_NODES_LIMIT;
+        if (count($this->getClusterHeads()) === 0) {
+            return false;
+        }
+
+        if (count($this->getClusterNodes()) === 0) {
+            return false;
+        }
+
+        if ($this->getDeadNodesCount() / $this->getNodesCount() > self::DEAD_NODES_LIMIT) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

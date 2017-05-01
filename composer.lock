@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "b959864a3746387184114e68457db240",
+    "content-hash": "01bada6ef8f8f6893a3aa3250a88a912",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -190,6 +190,55 @@
                 "uuid"
             ],
             "time": "2017-03-26T20:37:53+00:00"
+        },
+        {
+            "name": "symfony/finder",
+            "version": "v3.2.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/finder.git",
+                "reference": "9cf076f8f492f4b1ffac40aae9c2d287b4ca6930"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/finder/zipball/9cf076f8f492f4b1ffac40aae9c2d287b4ca6930",
+                "reference": "9cf076f8f492f4b1ffac40aae9c2d287b4ca6930",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5.9"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.2-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Finder\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony Finder Component",
+            "homepage": "https://symfony.com",
+            "time": "2017-04-12T14:13:17+00:00"
         },
         {
             "name": "symfony/stopwatch",

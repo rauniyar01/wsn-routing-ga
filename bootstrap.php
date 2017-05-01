@@ -18,7 +18,9 @@ $nodeFactory = new RandomLocationNodeFactory();
 $nodes = [];
 
 for ($i = 0; $i < NODES_COUNT; $i++) {
-    $nodes[] = $nodeFactory->create(FIELD_SIZE, FIELD_SIZE);
+    $node = $nodeFactory->create(FIELD_SIZE, FIELD_SIZE);
+
+    $nodes[$node->getId()] = $node;
 }
 
 $networkBuilder = new RandomNetworkBuilder();
@@ -26,7 +28,7 @@ $networkBuilder = new RandomNetworkBuilder();
 
 $network = $networkBuilder->build($baseStation, $nodes);
 
-(new NetworkExporter())->export($network);
+$networkExporter = new NetworkExporter();
 
 $oneRoundChargeReducer = new OneRoundChargeReducer();
 
@@ -58,12 +60,12 @@ function pluralForm(int $n, string $form1, string $form2, string $form3): string
 function printStats(int $rounds, Network $network)
 {
     echo sprintf(
-        '%d %s passed. Dead nodes: %d/%d. Average charge (alive nodes only): %s.',
+        '%d %s passed. Dead nodes: %d/%d. Total charge: %s.',
         $rounds,
         pluralForm($rounds, 'round', 'rounds', 'rounds'),
-        $network->getDeadNodesCount(),
-        $network->getNodesCount(),
-        round($network->getAverageCharge(), 3)
+        NODES_COUNT - $network->getNodesCount(),
+        NODES_COUNT,
+        round($network->getTotalCharge(), 3)
     );
 
     echo "\n";
@@ -72,6 +74,7 @@ function printStats(int $rounds, Network $network)
 $rounds         = 0;
 $deadNodesCount = $network->getDeadNodesCount();
 
+$networkExporter->export($network, $rounds, true);
 printStats($rounds, $network);
 
 while ($network->isAlive()) {
@@ -82,7 +85,8 @@ while ($network->isAlive()) {
     $rounds++;
     $newDeadNodesCount = $network->getDeadNodesCount();
 
-    if ($rounds % 100 == 0 || $rounds === 1 || !$network->isAlive() || $deadNodesCount !== $newDeadNodesCount) {
+    if ($rounds % 100 === 0 || !$network->isAlive() || $deadNodesCount !== $newDeadNodesCount) {
+        $networkExporter->export($network, $rounds);
         printStats($rounds, $network);
     }
 
