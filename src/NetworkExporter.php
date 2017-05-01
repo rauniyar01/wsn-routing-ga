@@ -40,6 +40,9 @@ class NetworkExporter
 
         $baseStation = $network->getBaseStation();
 
+        $this->addNewLine();
+        $this->addComment('Base station');
+
         $this->addExpression(
             sprintf(
                 "plot(%s, %s, 'or')",
@@ -47,6 +50,9 @@ class NetworkExporter
                 $this->convertCoordinate($baseStation->getY())
             )
         );
+
+        $this->addNewLine();
+        $this->addComment('Cluster heads');
 
         foreach ($network->getClusterHeads() as $node) {
             $this->addExpression(
@@ -58,6 +64,9 @@ class NetworkExporter
             );
         }
 
+//        $this->addNewLine();
+//        $this->addComment('Connections between cluster heads and base station');
+//
 //        foreach ($network->getClusterHeads() as $node) {
 //            $this->addExpression(
 //                sprintf(
@@ -70,6 +79,9 @@ class NetworkExporter
 //            );
 //        }
 
+        $this->addNewLine();
+        $this->addComment('Cluster nodes');
+
         foreach ($network->getClusterNodes() as $node) {
             $this->addExpression(
                 sprintf(
@@ -78,7 +90,12 @@ class NetworkExporter
                     $this->convertCoordinate($node->getY())
                 )
             );
+        }
 
+//        $this->addNewLine();
+//        $this->addComment('Connections between cluster nodes and heads');
+//
+//        foreach ($network->getClusterNodes() as $node) {
 //            $this->addExpression(
 //                sprintf(
 //                    "plot([%s %s], [%s %s], '--b', 'LineWidth', 0.1)",
@@ -88,7 +105,9 @@ class NetworkExporter
 //                    $this->convertCoordinate($node->getClusterHead()->getY())
 //                )
 //            );
-        }
+//        }
+
+        $this->addNewLine();
 
         $this->addExpression('hold off');
 
@@ -107,7 +126,27 @@ class NetworkExporter
      */
     private function addExpression(string $expression)
     {
-        $this->content .= $expression . "\n";
+        $this->content .= $expression;
+
+        $this->addNewLine();
+    }
+
+    /**
+     * @param string $comment
+     */
+    private function addComment(string $comment)
+    {
+        $this->content .= sprintf('%% %s', $comment);
+
+        $this->addNewLine();
+    }
+
+    /**
+     * @return void
+     */
+    private function addNewLine()
+    {
+        $this->content .= "\n";
     }
 
     /**
