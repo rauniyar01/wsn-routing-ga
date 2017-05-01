@@ -52,7 +52,11 @@ class NetworkExporter
     {
         $this->content = '';
 
+        $plotIndex = 0;
+
+        $this->addExpression('clear');
         $this->addExpression('close all');
+        $this->addExpression('figure');
         $this->addExpression('hold on');
 
         $baseStation = $network->getBaseStation();
@@ -62,7 +66,8 @@ class NetworkExporter
 
         $this->addExpression(
             sprintf(
-                "plot(%s, %s, 'or')",
+                "plot%d = plot(%s, %s, 'd', 'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r')",
+                ++$plotIndex,
                 $this->convertCoordinate($baseStation->getX()),
                 $this->convertCoordinate($baseStation->getY())
             )
@@ -78,31 +83,35 @@ class NetworkExporter
 
             $this->addExpression(
                 sprintf(
-                    "plot(%s, %s, '+r')",
+                    "plot%d = plot(%s, %s, 's', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r')",
+                    ++$plotIndex,
                     $this->convertCoordinate($node->getX()),
                     $this->convertCoordinate($node->getY())
                 )
             );
         }
 
-//        $this->addNewLine();
-//        $this->addComment('Connections between cluster heads and base station');
-//
-//        foreach ($network->getClusterHeads() as $node) {
-//            if ($node->isDead()) {
-//                continue;
-//            }
-//
-//            $this->addExpression(
-//                sprintf(
-//                    "plot([%s %s], [%s %s], '--k', 'LineWidth', 0.1)",
-//                    $this->convertCoordinate($node->getX()),
-//                    $this->convertCoordinate($baseStation->getX()),
-//                    $this->convertCoordinate($node->getY()),
-//                    $this->convertCoordinate($baseStation->getY())
-//                )
-//            );
-//        }
+        $this->addNewLine();
+        $this->addComment('Connections between cluster heads and base station');
+
+        foreach ($network->getClusterHeads() as $node) {
+            if ($node->isDead()) {
+                continue;
+            }
+
+            $this->addExpression(
+                sprintf(
+                    "plot%d = plot([%s %s], [%s %s], '--r')",
+                    ++$plotIndex,
+                    $this->convertCoordinate($node->getX()),
+                    $this->convertCoordinate($baseStation->getX()),
+                    $this->convertCoordinate($node->getY()),
+                    $this->convertCoordinate($baseStation->getY())
+                )
+            );
+
+            $this->addExpression(sprintf('plot%d.Color(4) = 0.25', $plotIndex));
+        }
 
         $this->addNewLine();
         $this->addComment('Cluster nodes');
@@ -114,31 +123,35 @@ class NetworkExporter
 
             $this->addExpression(
                 sprintf(
-                    "plot(%s, %s, '+b')",
+                    "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b')",
+                    ++$plotIndex,
                     $this->convertCoordinate($node->getX()),
                     $this->convertCoordinate($node->getY())
                 )
             );
         }
 
-//        $this->addNewLine();
-//        $this->addComment('Connections between cluster nodes and heads');
-//
-//        foreach ($network->getClusterNodes() as $node) {
-//            if ($node->isDead()) {
-//                continue;
-//            }
-//
-//            $this->addExpression(
-//                sprintf(
-//                    "plot([%s %s], [%s %s], '--b', 'LineWidth', 0.1)",
-//                    $this->convertCoordinate($node->getX()),
-//                    $this->convertCoordinate($node->getClusterHead()->getX()),
-//                    $this->convertCoordinate($node->getY()),
-//                    $this->convertCoordinate($node->getClusterHead()->getY())
-//                )
-//            );
-//        }
+        $this->addNewLine();
+        $this->addComment('Connections between cluster nodes and heads');
+
+        foreach ($network->getClusterNodes() as $node) {
+            if ($node->isDead()) {
+                continue;
+            }
+
+            $this->addExpression(
+                sprintf(
+                    "plot%d = plot([%s %s], [%s %s], '--k')",
+                    ++$plotIndex,
+                    $this->convertCoordinate($node->getX()),
+                    $this->convertCoordinate($node->getClusterHead()->getX()),
+                    $this->convertCoordinate($node->getY()),
+                    $this->convertCoordinate($node->getClusterHead()->getY())
+                )
+            );
+
+            $this->addExpression(sprintf('plot%d.Color(4) = 0.25', $plotIndex));
+        }
 
         $this->addNewLine();
 
