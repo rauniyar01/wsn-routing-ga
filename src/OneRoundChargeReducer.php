@@ -54,7 +54,7 @@ class OneRoundChargeReducer
      *
      * @return int
      */
-    public function getEnergyPercentFromDistance(int $distance): int
+    private function getEnergyPercentFromDistance(int $distance): int
     {
         return $distance / 100;
     }

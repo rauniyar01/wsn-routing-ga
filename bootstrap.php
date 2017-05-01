@@ -24,18 +24,18 @@ for ($i = 0; $i < NODES_COUNT; $i++) {
 $networkBuilder = new RandomNetworkBuilder();
 //$networkBuilder = new GeneticAlgorithmNetworkBuilder();
 
-$oneRoundChargeReducer = new OneRoundChargeReducer();
+$network = $networkBuilder->build($baseStation, $nodes);
 
-$network     = null;
-$roundsCount = 0;
+(new NetworkExporter())->export($network);
 
-while ($roundsCount === 0 || $network instanceof Network && $network->isAlive()) {
-    $network = $networkBuilder->build($baseStation, $nodes);
-
-    $oneRoundChargeReducer->reduce($network);
-
-    $roundsCount++;
-}
-
-var_dump($roundsCount);
-
+//$oneRoundChargeReducer = new OneRoundChargeReducer();
+//
+//$roundsCount = 0;
+//
+//while ($network->isAlive()) {
+//    $oneRoundChargeReducer->reduce($network);
+//
+//    $network = $networkBuilder->build($baseStation, $nodes);
+//
+//    var_dump(++$roundsCount);
+//}

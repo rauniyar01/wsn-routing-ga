@@ -74,8 +74,6 @@ class Network
             }
         }
 
-        var_dump($deadNodesCount);
-
         return $deadNodesCount / count($this->getNodes()) <= self::DEAD_NODES_LIMIT;
     }
 
