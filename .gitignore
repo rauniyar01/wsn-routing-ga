@@ -104,7 +104,9 @@ _deprecations
 
 #### Application
 
-# ...
+/vendor/
+!/var/.keep
+/var/*
 
 #### Keep
 !.keep

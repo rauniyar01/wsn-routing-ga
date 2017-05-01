@@ -1,0 +1,24 @@
+{
+    "name":              "podorozhny/dissertation",
+    "type":              "project",
+    "license":           "proprietary",
+    "authors":           [
+        {
+            "name":  "Ivan Podorozhny",
+            "email": "ivan@podorozhny.ru"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require":           {
+        "symfony/stopwatch": "^3.2",
+        "beberlei/assert": "^2.7",
+        "ramsey/uuid": "^3.6"
+    },
+    "require-dev":       { },
+    "autoload":          {
+        "psr-4": {
+            "Podorozhny\\Dissertation\\": "src/"
+        }
+    },
+    "autoload-dev":      { }
+}
