@@ -66,6 +66,22 @@ class Network
      */
     public function isAlive(): bool
     {
+        return $this->getDeadNodesCount() / $this->getNodesCount() <= self::DEAD_NODES_LIMIT;
+    }
+
+    /**
+     * @return int
+     */
+    public function getNodesCount(): int
+    {
+        return count($this->getNodes());
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeadNodesCount(): int
+    {
         $deadNodesCount = 0;
 
         foreach ($this->getNodes() as $node) {
@@ -74,13 +90,21 @@ class Network
             }
         }
 
-        return $deadNodesCount / count($this->getNodes()) <= self::DEAD_NODES_LIMIT;
+        return $deadNodesCount;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAliveNodesCount(): int
+    {
+        return $this->getNodesCount() - $this->getDeadNodesCount();
     }
 
     /**
      * @return float
      */
-    public function getTotalEnergy(): float
+    public function getTotalCharge(): float
     {
         $totalCharge = 0;
 
@@ -94,8 +118,14 @@ class Network
     /**
      * @return float
      */
-    public function getAverageEnergy(): float
+    public function getAverageCharge(): float
     {
-        return $this->getTotalEnergy() / count($this->getNodes());
+        $aliveNodesCount = $this->getAliveNodesCount();
+
+        if ($aliveNodesCount === 0) {
+            return 0;
+        }
+
+        return $this->getTotalCharge() / $aliveNodesCount;
     }
 }
