@@ -2,7 +2,7 @@
 
 namespace Podorozhny\Dissertation;
 
-class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
+class LeachNetworkBuilder implements NetworkBuilder
 {
     /**
      * {@inheritdoc}
