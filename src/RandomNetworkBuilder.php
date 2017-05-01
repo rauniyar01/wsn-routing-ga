@@ -13,6 +13,8 @@ class RandomNetworkBuilder implements NetworkBuilder
      */
     public function build(BaseStation $baseStation, array $nodes): Network
     {
+        /** @var Node[] $nodes */
+
         $nodesCount = count($nodes);
 
         $clusterHeadsCount = ceil($nodesCount * self::CLUSTER_HEADS_PERCENT / 100);
@@ -30,12 +32,12 @@ class RandomNetworkBuilder implements NetworkBuilder
 
         foreach ($nodes as $node) {
             if (false !== array_search($node, $clusterHeads, true)) {
-                $node->setClusterHead(null);
+                $node->makeClusterHead();
 
                 continue;
             }
 
-            $node->setClusterHead($node->getNearestNeighbor($clusterHeads));
+            $node->makeClusterNode($node->getNearestNeighbor($clusterHeads));
 
             $clusterNodes[] = $node;
         }

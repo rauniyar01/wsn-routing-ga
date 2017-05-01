@@ -6,7 +6,7 @@ interface NetworkBuilder
 {
     /**
      * @param BaseStation $baseStation
-     * @param array       $nodes
+     * @param Node[]      $nodes
      *
      * @return Network
      */

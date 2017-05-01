@@ -99,13 +99,23 @@ class Node
     }
 
     /**
-     * @param Node|null $node
+     * @return Node
+     */
+    public function makeClusterHead(): self
+    {
+        $this->clusterHead = null;
+
+        return $this;
+    }
+
+    /**
+     * @param Node $clusterHead
      *
      * @return Node
      */
-    public function setClusterHead(Node $node = null): self
+    public function makeClusterNode(Node $clusterHead): self
     {
-        $this->clusterHead = $node;
+        $this->clusterHead = $clusterHead;
 
         return $this;
     }
