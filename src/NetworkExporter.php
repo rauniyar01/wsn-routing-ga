@@ -54,10 +54,10 @@ class NetworkExporter
 
         $plotIndex = 0;
 
-        $this->addExpression('clear');
-        $this->addExpression('close all');
-        $this->addExpression('figure');
-        $this->addExpression('hold on');
+        $this->addExpression('clear;');
+        $this->addExpression('close all;');
+        $this->addExpression('figure;');
+        $this->addExpression('hold on;');
 
         $baseStation = $network->getBaseStation();
 
@@ -66,7 +66,7 @@ class NetworkExporter
 
         $this->addExpression(
             sprintf(
-                "plot%d = plot(%s, %s, 'd', 'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r')",
+                "plot%d = plot(%s, %s, 'd', 'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
                 ++$plotIndex,
                 $this->convertCoordinate($baseStation->getX()),
                 $this->convertCoordinate($baseStation->getY())
@@ -83,7 +83,7 @@ class NetworkExporter
 
             $this->addExpression(
                 sprintf(
-                    "plot%d = plot(%s, %s, 's', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r')",
+                    "plot%d = plot(%s, %s, 's', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
                     ++$plotIndex,
                     $this->convertCoordinate($node->getX()),
                     $this->convertCoordinate($node->getY())
@@ -101,7 +101,7 @@ class NetworkExporter
 
             $this->addExpression(
                 sprintf(
-                    "plot%d = plot([%s %s], [%s %s], '--r')",
+                    "plot%d = plot([%s %s], [%s %s], '--r');",
                     ++$plotIndex,
                     $this->convertCoordinate($node->getX()),
                     $this->convertCoordinate($baseStation->getX()),
@@ -110,7 +110,7 @@ class NetworkExporter
                 )
             );
 
-            $this->addExpression(sprintf('plot%d.Color(4) = 0.25', $plotIndex));
+            $this->addExpression(sprintf('plot%d.Color(4) = 0.25;', $plotIndex));
         }
 
         $this->addNewLine();
@@ -123,7 +123,7 @@ class NetworkExporter
 
             $this->addExpression(
                 sprintf(
-                    "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b')",
+                    "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');",
                     ++$plotIndex,
                     $this->convertCoordinate($node->getX()),
                     $this->convertCoordinate($node->getY())
@@ -141,7 +141,7 @@ class NetworkExporter
 
             $this->addExpression(
                 sprintf(
-                    "plot%d = plot([%s %s], [%s %s], '--k')",
+                    "plot%d = plot([%s %s], [%s %s], '--k');",
                     ++$plotIndex,
                     $this->convertCoordinate($node->getX()),
                     $this->convertCoordinate($node->getClusterHead()->getX()),
@@ -150,14 +150,14 @@ class NetworkExporter
                 )
             );
 
-            $this->addExpression(sprintf('plot%d.Color(4) = 0.25', $plotIndex));
+            $this->addExpression(sprintf('plot%d.Color(4) = 0.25;', $plotIndex));
         }
 
         $this->addNewLine();
 
-        $this->addExpression('hold off');
+        $this->addExpression('hold off;');
 
-        $this->addExpression(sprintf('axis([0 %d 0 %d])', FIELD_SIZE, FIELD_SIZE));
+        $this->addExpression(sprintf('axis([0 %d 0 %d]);', FIELD_SIZE, FIELD_SIZE));
 
         return $this->content;
     }

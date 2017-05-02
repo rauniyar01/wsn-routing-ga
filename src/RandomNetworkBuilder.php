@@ -15,7 +15,6 @@ class RandomNetworkBuilder implements NetworkBuilder
     {
         /** @var Node[] $nodes */
 
-        Assertion::allUuid(array_keys($nodes));
         Assertion::allIsInstanceOf($nodes, Node::class);
 
         $nodes = array_filter(
@@ -33,13 +32,13 @@ class RandomNetworkBuilder implements NetworkBuilder
 
         $clusterHeadsCount = ceil($nodesCount * self::CLUSTER_HEADS_RATIO);
 
-        $ids = array_keys($nodes);
+        $keys = array_keys($nodes);
 
-        shuffle($ids);
+        shuffle($keys);
 
         $tmp = [];
 
-        foreach ($ids as $id) {
+        foreach ($keys as $id) {
             $tmp[$id] = $nodes[$id];
         }
 
@@ -60,11 +59,8 @@ class RandomNetworkBuilder implements NetworkBuilder
 
             $node->makeClusterNode($node->getNearestNeighbor($clusterHeads));
 
-            $clusterNodes[$node->getId()] = $node;
+            $clusterNodes[] = $node;
         }
-
-        ksort($clusterHeads);
-        ksort($clusterNodes);
 
         return new Network($baseStation, $clusterHeads, $clusterNodes);
     }

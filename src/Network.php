@@ -19,8 +19,6 @@ class Network
 
     public function __construct(BaseStation $baseStation, array $clusterHeads, array $clusterNodes)
     {
-        Assertion::allUuid(array_keys($clusterHeads));
-        Assertion::allUuid(array_keys($clusterNodes));
         Assertion::allIsInstanceOf($clusterHeads, Node::class);
         Assertion::allIsInstanceOf($clusterNodes, Node::class);
 
