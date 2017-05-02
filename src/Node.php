@@ -80,10 +80,6 @@ class Node
      */
     public function reduceCharge(string $value): self
     {
-        if ($value == 0) {
-            return $this;
-        }
-
         $this->setCharge(bcsub($this->charge, $value, BC_SCALE));
 
         return $this;
@@ -98,6 +94,11 @@ class Node
     {
         $this->charge = bccomp($charge, 0) ? $charge : 0;
         $this->dead   = !bccomp($charge, 0);
+
+        if (!bccomp($charge, 0)) {
+            var_dump($charge);
+            die();
+        }
 
         return $this;
     }

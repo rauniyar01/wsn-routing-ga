@@ -85,18 +85,30 @@ final class NetworkFitnessProvider
 
         $network = new Network($baseStation, $clusterHeads, $clusterNodes);
 
-        $totalCharge = $network->getTotalCharge();
+        $totalCharge    = $network->getTotalCharge();
+        $deadNodesCount = $network->getDeadNodesCount();
 
         (new OneRoundChargeReducer())->reduce($network);
 
         $totalChargeConsumption = bcsub($totalCharge, $network->getTotalCharge(), BC_SCALE);
 
+        $nodesDied = $network->getDeadNodesCount() - $deadNodesCount;
+
         $averageChargeConsumption = bcdiv($totalChargeConsumption, $network->getNodesCount(), BC_SCALE);
 
         if ($averageChargeConsumption == 0) {
+            var_dump($network->getTotalCharge());
+            die();
+
             return PHP_INT_MAX;
         }
 
-        return bcdiv(1, $averageChargeConsumption, BC_SCALE);
+        $fitness = bcdiv(1, $averageChargeConsumption, BC_SCALE);
+
+        if ($nodesDied > 0) {
+            $fitness += (1 / $nodesDied);
+        }
+
+        return $fitness;
     }
 }

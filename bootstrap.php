@@ -39,13 +39,13 @@ function printStats(int $rounds, Network $network)
         pluralForm($rounds, 'round', 'rounds', 'rounds'),
         NODES_COUNT - $network->getNodesCount(),
         NODES_COUNT,
-        round($network->getTotalCharge(), 3)
+        $network->getTotalCharge()
     );
 
     echo "\n";
 }
 
-const BC_SCALE = 8;
+const BC_SCALE = 160;
 
 const NODES_COUNT            = 100;
 const FIELD_SIZE             = 100;
