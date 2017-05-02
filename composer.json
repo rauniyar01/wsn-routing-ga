@@ -10,10 +10,11 @@
     ],
     "minimum-stability": "stable",
     "require":           {
+        "php":               "^7.0",
+        "beberlei/assert":   "^2.7",
+        "ramsey/uuid":       "^3.6",
         "symfony/stopwatch": "^3.2",
-        "beberlei/assert": "^2.7",
-        "ramsey/uuid": "^3.6",
-        "symfony/finder": "^3.2"
+        "symfony/finder":    "^3.2"
     },
     "require-dev":       { },
     "autoload":          {
