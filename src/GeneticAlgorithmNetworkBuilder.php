@@ -48,10 +48,10 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
 
         $this->printStats($population);
 
-        $goal = 2000;
+//        $goal = 2000;
 
-        while ($bestFitness < $goal) {
-//        while ($population->getGenerationNumber() < 500 && $bestFitness != PHP_INT_MAX) {
+//        while ($bestFitness < $goal) {
+        while ($population->getGenerationNumber() < 5 && $bestFitness != PHP_INT_MAX) {
             $population->produceNewGeneration();
 
             $fitness = $population->getBestMember()->getFitness();
