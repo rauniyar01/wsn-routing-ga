@@ -77,7 +77,8 @@ $networkExporter = new NetworkExporter();
 
 $oneRoundChargeReducer = new OneRoundChargeReducer();
 
-$rounds         = 0;
+$rounds = 0;
+
 $deadNodesCount = $network->getDeadNodesCount();
 
 $networkExporter->export($network, $rounds, true);

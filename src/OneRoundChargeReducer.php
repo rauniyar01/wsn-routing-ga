@@ -48,7 +48,7 @@ class OneRoundChargeReducer
                 $energy   = $this->getEnergyPercentFromDistance($distance);
 
                 // abstract multiplier based on packet size
-                $energy *= 10;
+                $energy *= 100;
 
                 $node->reduceCharge($energy);
             }
