@@ -45,6 +45,8 @@ function printStats(int $rounds, Network $network)
     echo "\n";
 }
 
+const BC_SCALE = 8;
+
 const NODES_COUNT            = 100;
 const FIELD_SIZE             = 100;
 const ROUND_ITERATIONS_COUNT = 24;
@@ -71,7 +73,7 @@ $networkExporter = new NetworkExporter();
 
 $oneRoundChargeReducer = new OneRoundChargeReducer();
 
-$rounds = 0;
+$rounds         = 0;
 $deadNodesCount = $network->getDeadNodesCount();
 
 $networkExporter->export($network, $rounds, true);

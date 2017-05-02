@@ -16,7 +16,7 @@ class Node
     /** @var int in decimeters */
     private $y;
 
-    /** @var float */
+    /** @var string */
     private $charge;
 
     /** @var bool */
@@ -25,7 +25,7 @@ class Node
     /** @var Node|null */
     private $clusterHead;
 
-    public function __construct(int $x, int $y, float $charge = 100.0)
+    public function __construct(int $x, int $y, string $charge = '100')
     {
         $this->id = Uuid::uuid4()->toString();
         $this->x  = $x;
@@ -58,9 +58,9 @@ class Node
     }
 
     /**
-     * @return float
+     * @return string
      */
-    public function getCharge(): float
+    public function getCharge(): string
     {
         return $this->charge;
     }
@@ -74,26 +74,30 @@ class Node
     }
 
     /**
-     * @param float $value
+     * @param string $value
      *
      * @return Node
      */
-    public function reduceCharge(float $value): self
+    public function reduceCharge(string $value): self
     {
-        $this->setCharge($this->charge - $value);
+        if ($value == 0) {
+            return $this;
+        }
+
+        $this->setCharge(bcsub($this->charge, $value, BC_SCALE));
 
         return $this;
     }
 
     /**
-     * @param float $charge
+     * @param string $charge
      *
      * @return Node
      */
-    private function setCharge(float $charge): self
+    private function setCharge(string $charge): self
     {
-        $this->charge = $charge > 0 ? $charge : 0;
-        $this->dead   = !($this->charge > 0);
+        $this->charge = bccomp($charge, 0) ? $charge : 0;
+        $this->dead   = !bccomp($charge, 0);
 
         return $this;
     }

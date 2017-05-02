@@ -9,20 +9,6 @@ class OneRoundChargeReducer
      */
     public function reduce(Network $network)
     {
-        foreach ($network->getClusterHeads() as $node) {
-            if (!$node->isClusterHead()) {
-                var_dump(123);
-                die();
-            }
-        }
-
-        foreach ($network->getClusterNodes() as $node) {
-            if ($node->isClusterHead()) {
-                var_dump(123);
-                die();
-            }
-        }
-
         // Базовая станция говорит всем узлам информацию о том, являются ли они головными
         foreach ($network->getNodes() as $node) {
             $node->reduceCharge(0.005);
@@ -58,7 +44,13 @@ class OneRoundChargeReducer
 
             // Затраты головных узлов на отправку большого пакета на базовую станцию
             foreach ($network->getClusterHeads() as $node) {
-                $node->reduceCharge(0.025);
+                $distance = $node->distanceToBaseStation($network->getBaseStation());
+                $energy   = $this->getEnergyPercentFromDistance($distance);
+
+                // abstract multiplier based on packet size
+                $energy *= 10;
+
+                $node->reduceCharge($energy);
             }
         }
     }
@@ -66,9 +58,9 @@ class OneRoundChargeReducer
     /**
      * @param int $distance
      *
-     * @return int
+     * @return float
      */
-    private function getEnergyPercentFromDistance(int $distance): int
+    private function getEnergyPercentFromDistance(int $distance): float
     {
         return $distance / 1000;
     }

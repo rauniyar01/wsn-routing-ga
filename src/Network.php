@@ -112,23 +112,23 @@ class Network
     }
 
     /**
-     * @return float
+     * @return string
      */
-    public function getTotalCharge(): float
+    public function getTotalCharge(): string
     {
         $totalCharge = 0;
 
         foreach ($this->getNodes() as $node) {
-            $totalCharge += $node->getCharge();
+            $totalCharge = bcadd($totalCharge, $node->getCharge(), BC_SCALE);
         }
 
         return $totalCharge;
     }
 
     /**
-     * @return float
+     * @return string
      */
-    public function getAverageCharge(): float
+    public function getAverageCharge(): string
     {
         $aliveNodesCount = $this->getAliveNodesCount();
 
@@ -136,6 +136,6 @@ class Network
             return 0;
         }
 
-        return $this->getTotalCharge() / $aliveNodesCount;
+        return bcdiv($this->getTotalCharge(), $aliveNodesCount, BC_SCALE);
     }
 }

@@ -46,9 +46,9 @@ final class NetworkFitnessProvider
     /**
      * @param bool[] $bits
      *
-     * @return float
+     * @return string
      */
-    public static function getFitness(array $bits): float
+    public static function getFitness(array $bits): string
     {
         Assert::thatAll($bits)->boolean();
 
@@ -89,12 +89,14 @@ final class NetworkFitnessProvider
 
         (new OneRoundChargeReducer())->reduce($network);
 
-        $averageChargeConsumption = ($totalCharge - $network->getTotalCharge()) / $network->getNodesCount();
+        $totalChargeConsumption = bcsub($totalCharge, $network->getTotalCharge(), BC_SCALE);
+
+        $averageChargeConsumption = bcdiv($totalChargeConsumption, $network->getNodesCount(), BC_SCALE);
 
         if ($averageChargeConsumption == 0) {
             return PHP_INT_MAX;
         }
 
-        return 1 / $averageChargeConsumption;
+        return bcdiv(1, $averageChargeConsumption, BC_SCALE);
     }
 }

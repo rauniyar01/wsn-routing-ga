@@ -10,7 +10,7 @@ class Gene
     /** @var bool[] */
     private $bits;
 
-    /** @var float */
+    /** @var string */
     private $fitness;
 
     public function __construct(array $bits)
@@ -32,9 +32,9 @@ class Gene
     }
 
     /**
-     * @return float
+     * @return string
      */
-    public function getFitness(): float
+    public function getFitness(): string
     {
         return $this->fitness;
     }
