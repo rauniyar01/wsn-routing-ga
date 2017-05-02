@@ -69,6 +69,10 @@ $networkBuilder = new GeneticAlgorithmNetworkBuilder();
 
 $network = $networkBuilder->build($baseStation, $nodes);
 
+foreach ($network->getNodes() as $node) {
+    $node->restoreCharge();
+}
+
 $networkExporter = new NetworkExporter();
 
 $oneRoundChargeReducer = new OneRoundChargeReducer();

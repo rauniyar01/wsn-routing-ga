@@ -6,6 +6,8 @@ use Assert\Assert;
 
 final class NetworkFitnessProvider
 {
+    const GOAL = 1000;
+
     private static $instance;
 
     /** @var Node[] */
@@ -85,29 +87,30 @@ final class NetworkFitnessProvider
 
         $network = new Network($baseStation, $clusterHeads, $clusterNodes);
 
-        $totalCharge    = $network->getTotalCharge();
-        $deadNodesCount = $network->getDeadNodesCount();
+        foreach ($network->getNodes() as $node) {
+            $node->restoreCharge();
+        }
+
+        $totalCharge = $network->getTotalCharge();
+//        $deadNodesCount = $network->getDeadNodesCount();
 
         (new OneRoundChargeReducer())->reduce($network);
 
         $totalChargeConsumption = bcsub($totalCharge, $network->getTotalCharge(), BC_SCALE);
 
-        $nodesDied = $network->getDeadNodesCount() - $deadNodesCount;
+//        $nodesDied = $network->getDeadNodesCount() - $deadNodesCount;
 
         $averageChargeConsumption = bcdiv($totalChargeConsumption, $network->getNodesCount(), BC_SCALE);
 
         if ($averageChargeConsumption == 0) {
-            var_dump($network->getTotalCharge());
-            die();
-
-            return PHP_INT_MAX;
+            return self::GOAL;
         }
 
         $fitness = bcdiv(1, $averageChargeConsumption, BC_SCALE);
 
-        if ($nodesDied > 0) {
-            $fitness += (1 / $nodesDied);
-        }
+//        if ($nodesDied > 0) {
+//            $fitness += (1 / $nodesDied);
+//        }
 
         return $fitness;
     }
