@@ -2,9 +2,30 @@
 
 namespace Podorozhny\Dissertation;
 
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+
 ini_set('memory_limit', -1);
 
 include __DIR__ . '/vendor/autoload.php';
+
+$container = new ContainerBuilder();
+$loader    = new YamlFileLoader($container, new FileLocator(__DIR__));
+$loader->load('config/services.yml');
+
+/** @var ConsoleOutput $console */
+$console = $container->get('console');
+
+/** @var RandomLocationNodeFactory $nodeFactory */
+$nodeFactory = $container->get('random_location_node_factory');
+
+/** @var NetworkRunner $networkRunner */
+$networkRunner = $container->get('network_runner');
+
+/** @var NetworkExporter $networkExporter */
+$networkExporter = $container->get('network_exporter');
 
 /**
  * @param int    $n
@@ -27,33 +48,13 @@ function pluralForm(int $n, string $form1, string $form2, string $form3): string
     return $form3;
 }
 
-/**
- * @param int     $rounds
- * @param Network $network
- */
-function printStats(int $rounds, Network $network)
-{
-    echo sprintf(
-        '%d %s passed. Dead nodes: %d/%d. Total charge: %s.',
-        $rounds,
-        pluralForm($rounds, 'round', 'rounds', 'rounds'),
-        NODES_COUNT - $network->getNodesCount(),
-        NODES_COUNT,
-        $network->getTotalCharge()
-    );
-
-    echo "\n";
-}
-
-const BC_SCALE = 160;
+const BC_SCALE = 16;
 
 const NODES_COUNT            = 100;
 const FIELD_SIZE             = 100;
 const ROUND_ITERATIONS_COUNT = 24;
 
 $baseStation = new BaseStation(FIELD_SIZE * 10 / 2, FIELD_SIZE * 10 / 2);
-
-$nodeFactory = new RandomLocationNodeFactory();
 
 /** @var Node[] $nodes */
 $nodes = [];
@@ -64,37 +65,38 @@ for ($i = 0; $i < NODES_COUNT; $i++) {
     $nodes[] = $node;
 }
 
-//$networkBuilder = new RandomNetworkBuilder();
-$networkBuilder = new GeneticAlgorithmNetworkBuilder();
+$console->writeln(
+    sprintf(
+        '<info>Starting wireless sensor network modelling. Nodes count: %s. Field size: %d x %d meters.</info>',
+        number_format(NODES_COUNT, 0, '', ' '),
+        number_format(FIELD_SIZE, 0, '', ' '),
+        number_format(FIELD_SIZE, 0, '', ' ')
+    )
+);
 
-$network = $networkBuilder->build($baseStation, $nodes);
+$deadNodesCount = 0;
 
-foreach ($network->getNodes() as $node) {
-    $node->restoreCharge();
-}
+while ($isAlive = $networkRunner->run($baseStation, $nodes)) {
+    $baseStation = null;
+    $nodes = [];
 
-$networkExporter = new NetworkExporter();
-
-$oneRoundChargeReducer = new OneRoundChargeReducer();
-
-$rounds = 0;
-
-$deadNodesCount = $network->getDeadNodesCount();
-
-$networkExporter->export($network, $rounds, true);
-printStats($rounds, $network);
-
-while ($network->isAlive()) {
-    $oneRoundChargeReducer->reduce($network);
-
-    $network = $networkBuilder->build($baseStation, $nodes);
-
-    $rounds++;
+    $network           = $networkRunner->getNetwork();
+    $rounds            = $networkRunner->getRounds();
     $newDeadNodesCount = $network->getDeadNodesCount();
 
-    if ($rounds % 100 === 0 || !$network->isAlive() || $deadNodesCount !== $newDeadNodesCount) {
-        $networkExporter->export($network, $rounds);
-        printStats($rounds, $network);
+    if ($networkRunner->getRounds() % 100 === 0 || !$isAlive || $deadNodesCount !== $newDeadNodesCount) {
+        $networkExporter->export($network, $networkRunner->getRounds());
+
+        $console->writeln(
+            sprintf(
+                '<info>%d %s passed. Dead nodes: %d/%d. Total charge: %s.</info>',
+                number_format($rounds, 0, '', ' '),
+                pluralForm($rounds, 'round', 'rounds', 'rounds'),
+                number_format(NODES_COUNT - $network->getNodesCount(), 0, '', ' '),
+                number_format(NODES_COUNT, 0, '', ' '),
+                (float) $network->getTotalCharge()
+            )
+        );
     }
 
     $deadNodesCount = $newDeadNodesCount;

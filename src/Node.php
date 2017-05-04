@@ -86,24 +86,14 @@ class Node
     }
 
     /**
-     * @return Node
-     */
-    public function restoreCharge(): self
-    {
-        $this->setCharge(100);
-
-        return $this;
-    }
-
-    /**
      * @param string $charge
      *
      * @return Node
      */
     private function setCharge(string $charge): self
     {
-        $this->charge = bccomp($charge, 0) === 1 ? $charge : 0;
-        $this->dead   = bccomp($charge, 0) !== 1;
+        $this->charge = bccomp($charge, 0, BC_SCALE) === 1 ? $charge : 0;
+        $this->dead   = bccomp($charge, 0, BC_SCALE) !== 1;
 
         return $this;
     }

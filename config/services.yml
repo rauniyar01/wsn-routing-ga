@@ -1,0 +1,31 @@
+services:
+    console:
+        class: Symfony\Component\Console\Output\ConsoleOutput
+
+    random_location_node_factory:
+        class: Podorozhny\Dissertation\RandomLocationNodeFactory
+
+    network_builder.random:
+        class: Podorozhny\Dissertation\RandomNetworkBuilder
+
+    network_builder.genetic_algorithm:
+        class: Podorozhny\Dissertation\GeneticAlgorithmNetworkBuilder
+        arguments:
+            - '@network_fitness_provider'
+            - '@console'
+
+    one_round_charge_reducer:
+        class: Podorozhny\Dissertation\OneRoundChargeReducer
+
+    network_fitness_provider:
+        class: Podorozhny\Dissertation\NetworkFitnessProvider
+
+    network_runner:
+        class: Podorozhny\Dissertation\NetworkRunner
+        arguments:
+#            - '@network_builder.random'
+            - '@network_builder.genetic_algorithm'
+            - '@one_round_charge_reducer'
+
+    network_exporter:
+        class: Podorozhny\Dissertation\NetworkExporter

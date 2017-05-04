@@ -8,55 +8,49 @@ final class NetworkFitnessProvider
 {
     const GOAL = 1000;
 
-    private static $instance;
-
     /** @var Node[] */
-    private static $nodes;
-
-    private function __construct()
-    {
-    }
-
-    private function __clone()
-    {
-    }
-
-    protected function __wakeup()
-    {
-    }
-
-    /**
-     * @return NetworkFitnessProvider
-     */
-    public static function getInstance(): NetworkFitnessProvider
-    {
-        if (self::$instance === null) {
-            self::$instance = new self;
-        }
-
-        return self::$instance;
-    }
+    private $nodes;
 
     /**
      * @param array $nodes
      */
-    public static function setNodes(array $nodes)
+    public function setNodes(array $nodes)
     {
-        self::$nodes = array_values($nodes);
+        $this->nodes = [];
+
+        foreach ($nodes as $node) {
+            $this->nodes[] = clone $node;
+        }
     }
 
     /**
-     * @param bool[] $bits
+     * @return array
+     */
+    private function getNodes(): array
+    {
+        $nodes = [];
+
+        foreach ($this->nodes as $node) {
+            $nodes[] = clone $node;
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * @param bool[] $genes
      *
      * @return string
      */
-    public static function getFitness(array $bits): string
+    public function getFitness(array $genes): string
     {
-        Assert::thatAll($bits)->boolean();
+        Assert::thatAll($genes)->boolean();
 
-        Assert::that(count($bits))->eq(count(self::$nodes));
+        $nodes = $this->getNodes();
 
-        if (array_sum($bits) === 0) {
+        Assert::that(count($genes))->eq(count($nodes));
+
+        if (array_sum($genes) === 0) {
             return 0;
         }
 
@@ -65,8 +59,8 @@ final class NetworkFitnessProvider
         $clusterHeads = [];
         $clusterNodes = [];
 
-        foreach (self::$nodes as $key => $node) {
-            if (!$bits[$key]) {
+        foreach ($nodes as $key => $node) {
+            if (!$genes[$key]) {
                 continue;
             }
 
@@ -75,8 +69,8 @@ final class NetworkFitnessProvider
             $clusterHeads[] = $node;
         }
 
-        foreach (self::$nodes as $key => $node) {
-            if ($bits[$key]) {
+        foreach ($nodes as $key => $node) {
+            if ($genes[$key]) {
                 continue;
             }
 
@@ -86,10 +80,6 @@ final class NetworkFitnessProvider
         }
 
         $network = new Network($baseStation, $clusterHeads, $clusterNodes);
-
-        foreach ($network->getNodes() as $node) {
-            $node->restoreCharge();
-        }
 
         $totalCharge = $network->getTotalCharge();
 //        $deadNodesCount = $network->getDeadNodesCount();

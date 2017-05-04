@@ -3,12 +3,25 @@
 namespace Podorozhny\Dissertation;
 
 use Assert\Assertion;
-use Podorozhny\Dissertation\Ga\Gene;
+use Podorozhny\Dissertation\Ga\Genotype;
 use Podorozhny\Dissertation\Ga\Population;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
 {
     const INITIAL_CLUSTER_HEADS_RATIO = 0.1;
+
+    /** @var NetworkFitnessProvider */
+    private $fitnessProvider;
+
+    /** @var OutputInterface */
+    private $output;
+
+    public function __construct(NetworkFitnessProvider $fitnessProvider, OutputInterface $output)
+    {
+        $this->fitnessProvider = $fitnessProvider;
+        $this->output          = $output;
+    }
 
     /**
      * {@inheritdoc}
@@ -34,42 +47,51 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
             return new Network($baseStation, [], []);
         }
 
-        NetworkFitnessProvider::getInstance()::setNodes($nodes);
+        $this->fitnessProvider->setNodes($nodes);
 
-        $genes = [];
+        $genotypes = [];
 
         for ($i = 0; $i < Population::MAX_SIZE; $i++) {
-            $genes[] = $this->getRandomGene($nodesCount);
+            $genotypes[] = $this->getRandomGenotype($nodesCount);
         }
 
-        $population = new Population($genes);
+        $population = new Population($genotypes);
 
-        $bestFitness = $population->getBestMember()->getFitness();
+        $bestGenotype = $population->getBestGenotype();
 
         $this->printStats($population);
 
 //        while ($bestFitness < NetworkFitnessProvider::GOAL) {
-        while ($population->getGenerationNumber() < 50000 && $bestFitness < 100000000) {
+//        while ($population->getGenerationNumber() < 50 && $bestGenotype->getFitness() < 100000000) {
+        while ($population->getGenerationNumber() < 50) {
             $population->produceNewGeneration();
 
-            $fitness = $population->getBestMember()->getFitness();
+            $bestCurrentPopulationGenotype = $population->getBestGenotype();
 
-            if ($fitness === $bestFitness) {
-                continue;
+            if (0 !== bccomp($bestCurrentPopulationGenotype->getFitness(), $bestGenotype->getFitness(), BC_SCALE)) {
+                $this->printStats($population);
             }
 
-            $this->printStats($population);
-
-            $bestFitness = $fitness;
+            if (1 === bccomp($bestCurrentPopulationGenotype->getFitness(), $bestGenotype->getFitness(), BC_SCALE)) {
+                $bestGenotype = $bestCurrentPopulationGenotype;
+            }
         }
 
-        $bits = $population->getBestMember()->getBits();
+        $this->output->writeln(
+            sprintf(
+                '<comment>Chose best genotype (fitness %.6f): %s.</comment>',
+                $population->getBestGenotype()->getFitness(),
+                (string) $population->getBestGenotype()
+            )
+        );
+
+        $genes = $bestGenotype->getGenes();
 
         $clusterHeads = [];
         $clusterNodes = [];
 
         foreach ($nodes as $key => $node) {
-            if (!$bits[$key]) {
+            if (!$genes[$key]) {
                 continue;
             }
 
@@ -79,7 +101,7 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
         }
 
         foreach ($nodes as $key => $node) {
-            if ($bits[$key]) {
+            if ($genes[$key]) {
                 continue;
             }
 
@@ -94,23 +116,23 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
     /**
      * @param int $nodesCount
      *
-     * @return Gene
+     * @return Genotype
      */
-    public function getRandomGene(int $nodesCount): Gene
+    public function getRandomGenotype(int $nodesCount): Genotype
     {
-        $bits = [];
+        $genes = [];
 
         for ($i = 0; $i < $nodesCount; $i++) {
-            $bits[] = false;
+            $genes[] = false;
         }
 
         $clusterHeadsCount = $nodesCount * self::INITIAL_CLUSTER_HEADS_RATIO;
 
         do {
-            $bits[array_rand($bits)] = true;
-        } while (array_sum($bits) < $clusterHeadsCount);
+            $genes[array_rand($genes)] = true;
+        } while (array_sum($genes) < $clusterHeadsCount);
 
-        return new Gene($bits);
+        return new Genotype($genes);
     }
 
     /**
@@ -118,15 +140,13 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
      */
     private function printStats(Population $population)
     {
-//        return;
-
-        echo sprintf(
-            'Generation: %d. Fitness: %f. Bits: %s.',
-            $population->getGenerationNumber(),
-            $population->getBestMember()->getFitness(),
-            $population->getBestMember()->getBitsString()
+        $this->output->writeln(
+            sprintf(
+                'Generation: %d. Best fitness: %.6f. Best genotype: %s.',
+                number_format($population->getGenerationNumber(), 0, '', ' '),
+                $population->getBestGenotype()->getFitness(),
+                (string) $population->getBestGenotype()
+            )
         );
-
-        echo "\n";
     }
 }

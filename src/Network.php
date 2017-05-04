@@ -72,7 +72,7 @@ class Network
             return false;
         }
 
-        if ($this->getDeadNodesCount() / $this->getNodesCount() > self::DEAD_NODES_LIMIT) {
+        if (($this->getDeadNodesCount() / $this->getNodesCount()) > self::DEAD_NODES_LIMIT) {
             return false;
         }
 

@@ -6,40 +6,40 @@ use Assert\Assert;
 
 class Population
 {
-    const MAX_SIZE = 20;
+    const MAX_SIZE = 10;
 
-    const OBSOLESCENCE_RATIO = 0.1;
+    const OBSOLESCENCE_RATIO = 0.4;
 
-    /** @var Gene[] */
-    private $members;
+    /** @var Genotype[] */
+    private $genotypes;
 
     /** @var int */
     private $generationNumber = 1;
 
-    public function __construct(array $members)
+    public function __construct(array $genotypes)
     {
-        Assert::thatAll($members)->isInstanceOf(Gene::class);
-        Assert::that(count($members))->greaterOrEqualThan(2);
+        Assert::thatAll($genotypes)->isInstanceOf(Genotype::class);
+        Assert::that(count($genotypes))->greaterOrEqualThan(2);
 
-        $this->members = $members;
+        $this->genotypes = $genotypes;
 
-        $this->sortMembers();
+        $this->sortGenotypes();
     }
 
     /**
-     * @return Gene[]
+     * @return Genotype[]
      */
-    public function getMembers(): array
+    public function getGenotypes(): array
     {
-        return $this->members;
+        return $this->genotypes;
     }
 
     /**
-     * @return Gene
+     * @return Genotype
      */
-    public function getBestMember(): Gene
+    public function getBestGenotype(): Genotype
     {
-        return reset($this->members);
+        return reset($this->genotypes);
     }
 
     /**
@@ -55,17 +55,17 @@ class Population
      */
     public function produceNewGeneration(): self
     {
-        $replaceCount = ceil(count($this->members) * self::OBSOLESCENCE_RATIO);
+        $replaceCount = ceil(count($this->genotypes) * self::OBSOLESCENCE_RATIO);
 
         for ($i = 0; $i < $replaceCount; $i++) {
-            $this->replaceWorstMembersWithNewChildren();
+            $this->replaceWorstGenotypesWithNewChildren();
         }
 
-        foreach ($this->members as $member) {
-            $member->mutate(0.5);
+        foreach ($this->genotypes as $genotype) {
+            $genotype->mutate(0.5);
         }
 
-        $this->sortMembers();
+        $this->sortGenotypes();
 
         $this->generationNumber++;
 
@@ -75,17 +75,17 @@ class Population
     /**
      * @return Population
      */
-    private function replaceWorstMembersWithNewChildren(): self
+    private function replaceWorstGenotypesWithNewChildren(): self
     {
-        list($firstChild, $secondChild) = reset($this->members)->mate(next($this->members));
+        list($firstChild, $secondChild) = reset($this->genotypes)->mate(next($this->genotypes));
 
-        array_pop($this->members);
-        array_pop($this->members);
+        array_pop($this->genotypes);
+        array_pop($this->genotypes);
 
-        $this->members[] = $firstChild;
-        $this->members[] = $secondChild;
+        $this->genotypes[] = $firstChild;
+        $this->genotypes[] = $secondChild;
 
-        $this->sortMembers();
+        $this->sortGenotypes();
 
         return $this;
     }
@@ -93,12 +93,12 @@ class Population
     /**
      * @return Population
      */
-    private function sortMembers(): self
+    private function sortGenotypes(): self
     {
         usort(
-            $this->members,
-            function (Gene $firstGene, Gene $secondGene) {
-                return $secondGene->getFitness() <=> $firstGene->getFitness();
+            $this->genotypes,
+            function (Genotype $firstGenotype, Genotype $secondGenotype) {
+                return $secondGenotype->getFitness() <=> $firstGenotype->getFitness();
             }
         );
 
