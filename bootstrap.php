@@ -74,30 +74,39 @@ $console->writeln(
     )
 );
 
-$deadNodesCount = 0;
+$console->writeln(
+    sprintf(
+        '<info>0 rounds passed. Dead nodes: %d/%d. Total charge: %s.</info>',
+        0,
+        number_format(NODES_COUNT, 0, '', ' '),
+        (float) array_sum(
+            array_map(
+                function (Node $node) {
+                    return $node->getCharge();
+                },
+                $nodes
+            )
+        )
+    )
+);
 
 while ($isAlive = $networkRunner->run($baseStation, $nodes)) {
     $baseStation = null;
-    $nodes = [];
+    $nodes       = [];
 
-    $network           = $networkRunner->getNetwork();
-    $rounds            = $networkRunner->getRounds();
-    $newDeadNodesCount = $network->getDeadNodesCount();
+    $network = $networkRunner->getNetwork();
+    $rounds  = $networkRunner->getRounds();
 
-    if ($networkRunner->getRounds() % 100 === 0 || !$isAlive || $deadNodesCount !== $newDeadNodesCount) {
-        $networkExporter->export($network, $networkRunner->getRounds());
+    $networkExporter->export($network, $networkRunner->getRounds());
 
-        $console->writeln(
-            sprintf(
-                '<info>%d %s passed. Dead nodes: %d/%d. Total charge: %s.</info>',
-                number_format($rounds, 0, '', ' '),
-                pluralForm($rounds, 'round', 'rounds', 'rounds'),
-                number_format(NODES_COUNT - $network->getNodesCount(), 0, '', ' '),
-                number_format(NODES_COUNT, 0, '', ' '),
-                (float) $network->getTotalCharge()
-            )
-        );
-    }
-
-    $deadNodesCount = $newDeadNodesCount;
+    $console->writeln(
+        sprintf(
+            '<info>%d %s passed. Dead nodes: %d/%d. Total charge: %s.</info>',
+            number_format($rounds, 0, '', ' '),
+            pluralForm($rounds, 'round', 'rounds', 'rounds'),
+            number_format(NODES_COUNT - $network->getNodesCount(), 0, '', ' '),
+            number_format(NODES_COUNT, 0, '', ' '),
+            (float) $network->getTotalCharge()
+        )
+    );
 }

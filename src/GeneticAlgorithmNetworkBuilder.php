@@ -5,33 +5,33 @@ namespace Podorozhny\Dissertation;
 use Assert\Assertion;
 use Podorozhny\Dissertation\Ga\Genotype;
 use Podorozhny\Dissertation\Ga\Population;
+use Podorozhny\Dissertation\Ga\PopulationManager;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
 {
     const INITIAL_CLUSTER_HEADS_RATIO = 0.1;
 
-    /** @var NetworkFitnessProvider */
-    private $fitnessProvider;
+    /** @var PopulationManager */
+    private $populationManager;
 
     /** @var OutputInterface */
     private $output;
 
-    public function __construct(NetworkFitnessProvider $fitnessProvider, OutputInterface $output)
+    public function __construct(PopulationManager $populationManager, OutputInterface $output)
     {
-        $this->fitnessProvider = $fitnessProvider;
-        $this->output          = $output;
+        $this->populationManager = $populationManager;
+        $this->output            = $output;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function build(BaseStation $baseStation, array $nodes): Network
+    public function build(BaseStation $baseStation, array $nodes)
     {
-        /** @var Node[] $nodes */
-
         Assertion::allIsInstanceOf($nodes, Node::class);
 
+        /** @var Node[] $nodes */
         $nodes = array_values(
             array_filter(
                 $nodes,
@@ -41,47 +41,52 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
             )
         );
 
-        $nodesCount = count($nodes);
-
-        if ($nodesCount < 2) {
-            return new Network($baseStation, [], []);
+        if (count($nodes) < 2) {
+            return false;
         }
 
-        $this->fitnessProvider->setNodes($nodes);
+        $this->populationManager->setNodes($nodes);
 
         $genotypes = [];
 
         for ($i = 0; $i < Population::MAX_SIZE; $i++) {
-            $genotypes[] = $this->getRandomGenotype($nodesCount);
+            $genotypes[] = $this->getRandomGenotype(count($nodes));
         }
 
-        $population = new Population($genotypes);
+        $population = $this->populationManager->create($genotypes);
 
         $bestGenotype = $population->getBestGenotype();
+        $bestFitness  = $this->populationManager->getFitness($bestGenotype);
 
         $this->printStats($population);
 
-//        while ($bestFitness < NetworkFitnessProvider::GOAL) {
+//        while ($bestFitness < NetworkFitnessCalculator::GOAL) {
 //        while ($population->getGenerationNumber() < 50 && $bestGenotype->getFitness() < 100000000) {
         while ($population->getGenerationNumber() < 50) {
-            $population->produceNewGeneration();
+            $this->populationManager->produceNewGeneration($population);
 
             $bestCurrentPopulationGenotype = $population->getBestGenotype();
+            $bestCurrentPopulationFitness  = $this->populationManager->getFitness($bestCurrentPopulationGenotype);
 
-            if (0 !== bccomp($bestCurrentPopulationGenotype->getFitness(), $bestGenotype->getFitness(), BC_SCALE)) {
+            if (0 !== bccomp($bestCurrentPopulationFitness, $bestFitness, BC_SCALE)) {
                 $this->printStats($population);
             }
 
-            if (1 === bccomp($bestCurrentPopulationGenotype->getFitness(), $bestGenotype->getFitness(), BC_SCALE)) {
+            if (1 === bccomp($bestCurrentPopulationFitness, $bestFitness, BC_SCALE)) {
                 $bestGenotype = $bestCurrentPopulationGenotype;
+                $bestFitness  = $bestCurrentPopulationFitness;
             }
+        }
+
+        if (array_sum($bestGenotype->getGenes()) === 0) {
+            return false;
         }
 
         $this->output->writeln(
             sprintf(
                 '<comment>Chose best genotype (fitness %.6f): %s.</comment>',
-                $population->getBestGenotype()->getFitness(),
-                (string) $population->getBestGenotype()
+                $bestFitness,
+                (string) $bestGenotype
             )
         );
 
@@ -140,12 +145,15 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
      */
     private function printStats(Population $population)
     {
+        $bestGenotype = $population->getBestGenotype();
+        $bestFitness  = $this->populationManager->getFitness($bestGenotype);
+
         $this->output->writeln(
             sprintf(
                 'Generation: %d. Best fitness: %.6f. Best genotype: %s.',
                 number_format($population->getGenerationNumber(), 0, '', ' '),
-                $population->getBestGenotype()->getFitness(),
-                (string) $population->getBestGenotype()
+                $bestFitness,
+                (string) $bestGenotype
             )
         );
     }

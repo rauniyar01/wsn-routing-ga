@@ -22,8 +22,18 @@ class Population
         Assert::that(count($genotypes))->greaterOrEqualThan(2);
 
         $this->genotypes = $genotypes;
+    }
 
-        $this->sortGenotypes();
+    /**
+     * @param array $genotypes
+     *
+     * @return Population
+     */
+    public function setGenotypes(array $genotypes): self
+    {
+        $this->genotypes = $genotypes;
+
+        return $this;
     }
 
     /**
@@ -35,11 +45,13 @@ class Population
     }
 
     /**
-     * @return Genotype
+     * @return Population
      */
-    public function getBestGenotype(): Genotype
+    public function incrementGenerationNumber(): self
     {
-        return reset($this->genotypes);
+        $this->generationNumber++;
+
+        return $this;
     }
 
     /**
@@ -51,57 +63,10 @@ class Population
     }
 
     /**
-     * @return Population
+     * @return Genotype
      */
-    public function produceNewGeneration(): self
+    public function getBestGenotype(): Genotype
     {
-        $replaceCount = ceil(count($this->genotypes) * self::OBSOLESCENCE_RATIO);
-
-        for ($i = 0; $i < $replaceCount; $i++) {
-            $this->replaceWorstGenotypesWithNewChildren();
-        }
-
-        foreach ($this->genotypes as $genotype) {
-            $genotype->mutate(0.5);
-        }
-
-        $this->sortGenotypes();
-
-        $this->generationNumber++;
-
-        return $this;
-    }
-
-    /**
-     * @return Population
-     */
-    private function replaceWorstGenotypesWithNewChildren(): self
-    {
-        list($firstChild, $secondChild) = reset($this->genotypes)->mate(next($this->genotypes));
-
-        array_pop($this->genotypes);
-        array_pop($this->genotypes);
-
-        $this->genotypes[] = $firstChild;
-        $this->genotypes[] = $secondChild;
-
-        $this->sortGenotypes();
-
-        return $this;
-    }
-
-    /**
-     * @return Population
-     */
-    private function sortGenotypes(): self
-    {
-        usort(
-            $this->genotypes,
-            function (Genotype $firstGenotype, Genotype $secondGenotype) {
-                return $secondGenotype->getFitness() <=> $firstGenotype->getFitness();
-            }
-        );
-
-        return $this;
+        return reset($this->genotypes);
     }
 }

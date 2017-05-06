@@ -6,8 +6,6 @@ use Assert\Assertion;
 
 class Network
 {
-    const DEAD_NODES_LIMIT = 0.8;
-
     /** @var BaseStation */
     private $baseStation;
 
@@ -64,15 +62,11 @@ class Network
      */
     public function isAlive(): bool
     {
-        if (count($this->getClusterHeads()) === 0) {
+        if (count($this->getClusterHeads()) < 1) {
             return false;
         }
 
-        if (count($this->getClusterNodes()) === 0) {
-            return false;
-        }
-
-        if (($this->getDeadNodesCount() / $this->getNodesCount()) > self::DEAD_NODES_LIMIT) {
+        if (count($this->getClusterNodes()) < 1) {
             return false;
         }
 
@@ -85,30 +79,6 @@ class Network
     public function getNodesCount(): int
     {
         return count($this->getNodes());
-    }
-
-    /**
-     * @return int
-     */
-    public function getDeadNodesCount(): int
-    {
-        $deadNodesCount = 0;
-
-        foreach ($this->getNodes() as $node) {
-            if ($node->isDead()) {
-                $deadNodesCount++;
-            }
-        }
-
-        return $deadNodesCount;
-    }
-
-    /**
-     * @return int
-     */
-    public function getAliveNodesCount(): int
-    {
-        return $this->getNodesCount() - $this->getDeadNodesCount();
     }
 
     /**
@@ -130,12 +100,6 @@ class Network
      */
     public function getAverageCharge(): string
     {
-        $aliveNodesCount = $this->getAliveNodesCount();
-
-        if ($aliveNodesCount === 0) {
-            return 0;
-        }
-
-        return bcdiv($this->getTotalCharge(), $aliveNodesCount, BC_SCALE);
+        return bcdiv($this->getTotalCharge(), $this->getNodesCount(), BC_SCALE);
     }
 }

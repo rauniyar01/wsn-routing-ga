@@ -11,14 +11,19 @@ services:
     network_builder.genetic_algorithm:
         class: Podorozhny\Dissertation\GeneticAlgorithmNetworkBuilder
         arguments:
-            - '@network_fitness_provider'
+            - '@ga_population_manager'
             - '@console'
 
     one_round_charge_reducer:
         class: Podorozhny\Dissertation\OneRoundChargeReducer
 
-    network_fitness_provider:
-        class: Podorozhny\Dissertation\NetworkFitnessProvider
+    ga_population_manager:
+        class: Podorozhny\Dissertation\Ga\PopulationManager
+        arguments:
+            - '@network_fitness_calculator'
+
+    network_fitness_calculator:
+        class: Podorozhny\Dissertation\NetworkFitnessCalculator
 
     network_runner:
         class: Podorozhny\Dissertation\NetworkRunner

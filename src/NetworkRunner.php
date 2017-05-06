@@ -61,6 +61,10 @@ class NetworkRunner
 
         $this->network = $this->builder->build($baseStation, $nodes);
 
+        if (!$this->network instanceof Network) {
+            return false;
+        }
+
         $this->reducer->reduce($this->network);
 
         $this->rounds++;

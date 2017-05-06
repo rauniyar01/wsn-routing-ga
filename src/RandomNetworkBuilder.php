@@ -11,7 +11,7 @@ class RandomNetworkBuilder implements NetworkBuilder
     /**
      * {@inheritdoc}
      */
-    public function build(BaseStation $baseStation, array $nodes): Network
+    public function build(BaseStation $baseStation, array $nodes)
     {
         /** @var Node[] $nodes */
 
@@ -27,7 +27,7 @@ class RandomNetworkBuilder implements NetworkBuilder
         $nodesCount = count($nodes);
 
         if ($nodesCount === 0) {
-            return new Network($baseStation, [], []);
+            return false;
         }
 
         $clusterHeadsCount = ceil($nodesCount * self::CLUSTER_HEADS_RATIO);

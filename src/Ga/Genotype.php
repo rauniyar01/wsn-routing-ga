@@ -3,15 +3,11 @@
 namespace Podorozhny\Dissertation\Ga;
 
 use Assert\Assert;
-use Podorozhny\Dissertation\NetworkFitnessProvider;
 
 class Genotype
 {
     /** @var bool[] */
     private $genes;
-
-    /** @var string */
-    private $fitness;
 
     public function __construct(array $genes)
     {
@@ -19,8 +15,6 @@ class Genotype
         Assert::that(count($genes))->greaterOrEqualThan(2);
 
         $this->genes = $genes;
-
-        $this->updateFitness();
     }
 
     /**
@@ -48,14 +42,6 @@ class Genotype
     }
 
     /**
-     * @return string
-     */
-    public function getFitness(): string
-    {
-        return $this->fitness;
-    }
-
-    /**
      * @param float $chance
      *
      * @return Genotype
@@ -71,8 +57,6 @@ class Genotype
         $key = array_rand($this->genes);
 
         $this->genes[$key] = !$this->genes[$key];
-
-        $this->updateFitness();
 
         return $this;
     }
@@ -100,18 +84,5 @@ class Genotype
         );
 
         return [new Genotype($firstChildGenes), new Genotype($secondChildGenes)];
-    }
-
-    /**
-     * @return Genotype
-     */
-    public function updateFitness(): self
-    {
-        // TODO!
-        $fitnessProvider = new NetworkFitnessProvider();
-
-        $this->fitness = $fitnessProvider->getFitness($this->getGenes());
-
-        return $this;
     }
 }
