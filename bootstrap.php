@@ -22,7 +22,14 @@ $uuidFactory = new UuidFactory();
 $uuidFactory->setRandomGenerator(new MtRandGenerator());
 Uuid::setFactory($uuidFactory);
 
-$containerCacheFile = __DIR__ . '/var/cache/container.php';
+$cacheDirectory = __DIR__ . '/var/cache';
+
+if (!is_dir($cacheDirectory) && (false === @mkdir($cacheDirectory, 0775, true)) || !is_writable($cacheDirectory)
+) {
+    throw new \Exception(sprintf('Cache directory "%s" is not writable.', $cacheDirectory));
+}
+
+$containerCacheFile = $cacheDirectory . '/container.php';
 
 $container = new ContainerBuilder();
 $loader    = new YamlFileLoader($container, new FileLocator(__DIR__));
