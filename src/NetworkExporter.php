@@ -74,24 +74,6 @@ final class NetworkExporter
         $baseStation = $network->getBaseStation();
 
         $this->addNewLine();
-        $this->addComment('Connections between cluster heads and base station');
-
-        foreach ($network->getClusterHeads() as $sensorNode) {
-            $this->addExpression(
-                sprintf(
-                    "plot%d = plot([%s %s], [%s %s], '--r');",
-                    ++$plotIndex,
-                    $this->convertCoordinate($sensorNode->getX()),
-                    $this->convertCoordinate($baseStation->getX()),
-                    $this->convertCoordinate($sensorNode->getY()),
-                    $this->convertCoordinate($baseStation->getY())
-                )
-            );
-
-            $this->addExpression(sprintf('plot%d.Color(4) = 0.25;', $plotIndex));
-        }
-
-        $this->addNewLine();
         $this->addComment('Connections between cluster nodes and heads');
 
         foreach ($network->getClusterNodes() as $sensorNode) {
@@ -110,16 +92,36 @@ final class NetworkExporter
         }
 
         $this->addNewLine();
-        $this->addComment('Base station');
+        $this->addComment('Connections between cluster heads and base station');
 
-        $this->addExpression(
-            sprintf(
-                "plot%d = plot(%s, %s, 'd', 'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
-                ++$plotIndex,
-                $this->convertCoordinate($baseStation->getX()),
-                $this->convertCoordinate($baseStation->getY())
-            )
-        );
+        foreach ($network->getClusterHeads() as $sensorNode) {
+            $this->addExpression(
+                sprintf(
+                    "plot%d = plot([%s %s], [%s %s], '--r');",
+                    ++$plotIndex,
+                    $this->convertCoordinate($sensorNode->getX()),
+                    $this->convertCoordinate($baseStation->getX()),
+                    $this->convertCoordinate($sensorNode->getY()),
+                    $this->convertCoordinate($baseStation->getY())
+                )
+            );
+
+            $this->addExpression(sprintf('plot%d.Color(4) = 0.25;', $plotIndex));
+        }
+
+        $this->addNewLine();
+        $this->addComment('Cluster nodes');
+
+        foreach ($network->getClusterNodes() as $sensorNode) {
+            $this->addExpression(
+                sprintf(
+                    "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');",
+                    ++$plotIndex,
+                    $this->convertCoordinate($sensorNode->getX()),
+                    $this->convertCoordinate($sensorNode->getY())
+                )
+            );
+        }
 
         $this->addNewLine();
         $this->addComment('Cluster heads');
@@ -136,18 +138,16 @@ final class NetworkExporter
         }
 
         $this->addNewLine();
-        $this->addComment('Cluster nodes');
+        $this->addComment('Base station');
 
-        foreach ($network->getClusterNodes() as $sensorNode) {
-            $this->addExpression(
-                sprintf(
-                    "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');",
-                    ++$plotIndex,
-                    $this->convertCoordinate($sensorNode->getX()),
-                    $this->convertCoordinate($sensorNode->getY())
-                )
-            );
-        }
+        $this->addExpression(
+            sprintf(
+                "plot%d = plot(%s, %s, 'd', 'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
+                ++$plotIndex,
+                $this->convertCoordinate($baseStation->getX()),
+                $this->convertCoordinate($baseStation->getY())
+            )
+        );
 
         $this->addNewLine();
 
