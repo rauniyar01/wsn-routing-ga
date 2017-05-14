@@ -35,16 +35,16 @@ final class NetworkExporter
 
         $directory = dirname($fileName);
 
+        if (!is_dir($directory) && (false === @mkdir($directory, 0775, true)) || !is_writable($directory)
+        ) {
+            throw new \Exception(sprintf('Export directory "%s" is not writable.', $directory));
+        }
+
         if ($clear) {
             /** @var \SplFileInfo $file */
             foreach ((new Finder())->files()->in($directory) as $file) {
                 unlink($file->getRealPath());
             }
-        }
-
-        if (!is_dir($directory) && (false === @mkdir($directory, 0775, true)) || !is_writable($directory)
-        ) {
-            throw new \Exception(sprintf('Export directory "%s" is not writable.', $directory));
         }
 
         $tmpFileName = $fileName . '.' . uniqid('', true);
@@ -165,7 +165,7 @@ final class NetworkExporter
      */
     private function getFilePath(string $key): string
     {
-        return __DIR__ . sprintf('/../var/matlab/plot_network_%s.m', $key);
+        return __DIR__ . sprintf('/../var/matlab/plots/network_%s.m', $key);
     }
 
     /** @param string $expression */
