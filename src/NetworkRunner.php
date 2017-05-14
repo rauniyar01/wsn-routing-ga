@@ -65,6 +65,12 @@ class NetworkRunner
             return false;
         }
 
+        $genes = [];
+
+        foreach ($nodes as $node) {
+            $genes[$node->getId()] = $node->isClusterHead();
+        }
+
         $this->reducer->reduce($this->network);
 
         $this->rounds++;

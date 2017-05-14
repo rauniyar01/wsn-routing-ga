@@ -62,10 +62,6 @@ class Network
      */
     public function isAlive(): bool
     {
-        if (count($this->getClusterHeads()) < 1) {
-            return false;
-        }
-
         if (count($this->getClusterNodes()) < 1) {
             return false;
         }

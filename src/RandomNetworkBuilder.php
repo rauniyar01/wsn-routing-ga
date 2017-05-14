@@ -34,7 +34,7 @@ class RandomNetworkBuilder implements NetworkBuilder
 
         $keys = array_keys($nodes);
 
-        shuffle($keys);
+        Util::shuffle($keys);
 
         $tmp = [];
 

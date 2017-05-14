@@ -137,39 +137,40 @@ class Node
     }
 
     /**
+     * @param int $x
+     * @param int $y
+     *
+     * @return int in decimeters
+     */
+    public function distanceTo(int $x, int $y): int
+    {
+        $distanceX = $this->getX() - $x;
+        $distanceY = $this->getY() - $y;
+
+        return ceil(sqrt($distanceX * $distanceX + $distanceY * $distanceY));
+    }
+
+    /**
      * @param Node $node
      *
      * @return int in decimeters
      */
     public function distanceToNeighbor(Node $node): int
     {
-        $distanceX = $this->getX() - $node->getX();
-        $distanceY = $this->getY() - $node->getY();
-
-        return ceil(sqrt($distanceX * $distanceX + $distanceY * $distanceY));
-    }
-
-    /**
-     * @param BaseStation $baseStation
-     *
-     * @return int in decimeters
-     */
-    public function distanceToBaseStation(BaseStation $baseStation): int
-    {
-        $distanceX = $this->getX() - $baseStation->getX();
-        $distanceY = $this->getY() - $baseStation->getY();
-
-        return ceil(sqrt($distanceX * $distanceX + $distanceY * $distanceY));
+        return $this->distanceTo($node->getX(), $node->getY());
     }
 
     /**
      * @param Node[] $nodes
      *
-     * @return Node
+     * @return Node|false
      */
-    public function getNearestNeighbor(array $nodes): Node
+    public function getNearestNeighbor(array $nodes)
     {
-        Assertion::true(count($nodes) > 0);
+        if (count($nodes) === 0) {
+            return false;
+        }
+
         Assertion::allIsInstanceOf($nodes, Node::class);
 
         $nearest         = reset($nodes);

@@ -6,9 +6,7 @@ use Assert\Assert;
 
 class Population
 {
-    const MAX_SIZE = 10;
-
-    const OBSOLESCENCE_RATIO = 0.4;
+    const SIZE = 20;
 
     /** @var Genotype[] */
     private $genotypes;
@@ -18,10 +16,7 @@ class Population
 
     public function __construct(array $genotypes)
     {
-        Assert::thatAll($genotypes)->isInstanceOf(Genotype::class);
-        Assert::that(count($genotypes))->greaterOrEqualThan(2);
-
-        $this->genotypes = $genotypes;
+        $this->setGenotypes($genotypes);
     }
 
     /**
@@ -31,6 +26,9 @@ class Population
      */
     public function setGenotypes(array $genotypes): self
     {
+        Assert::that(count($genotypes))->eq(self::SIZE);
+        Assert::thatAll($genotypes)->isInstanceOf(Genotype::class);
+
         $this->genotypes = $genotypes;
 
         return $this;

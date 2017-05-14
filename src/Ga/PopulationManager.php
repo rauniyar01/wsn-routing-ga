@@ -4,9 +4,15 @@ namespace Podorozhny\Dissertation\Ga;
 
 use Podorozhny\Dissertation\NetworkFitnessCalculator;
 use Podorozhny\Dissertation\Node;
+use Podorozhny\Dissertation\Util;
 
 class PopulationManager
 {
+    const ELITE_GENOTYPE_RATE = 0.1;
+    const CROSSOVER_RATE      = 0.6;
+
+    const MUTATION_RATE       = 0.5;
+
     /** @var NetworkFitnessCalculator */
     private $fitnessCalculator;
 
@@ -49,17 +55,46 @@ class PopulationManager
     {
         $genotypes = $population->getGenotypes();
 
-        $replaceCount = ceil(count($genotypes) * Population::OBSOLESCENCE_RATIO);
+        $eliteGenotypesCount = ceil(Population::SIZE * self::ELITE_GENOTYPE_RATE / 2) * 2;
 
-        for ($i = 0; $i < $replaceCount; $i++) {
-            $genotypes = $this->replaceWorstGenotypesWithNewChildren($genotypes);
+        /** @var Genotype[] $newGenotypes */
+        $newGenotypes = [];
+
+        for ($i = 0; $i < $eliteGenotypesCount; $i++) {
+            $newGenotypes[$i] = $genotypes[$i];
+
+            if ($i < $eliteGenotypesCount / 2) {
+                $newGenotypes[$i]->mutate(self::MUTATION_RATE);
+            }
         }
 
-        foreach ($genotypes as $genotype) {
-            $genotype->mutate(0.5);
+        for ($i = 0; $i < floor(Population::SIZE * self::CROSSOVER_RATE / 2); $i++) {
+            $fatherKey = Util::arrayRand($genotypes);
+
+            do {
+                $motherKey = Util::arrayRand($genotypes);
+            } while ($fatherKey !== $motherKey);
+
+            $father = $genotypes[$fatherKey];
+            $mother = $genotypes[$motherKey];
+
+            list($firstChild, $secondChild) = $father->mate($mother);
+
+            $newGenotypes[] = $firstChild->mutate(self::MUTATION_RATE);
+            $newGenotypes[] = $secondChild->mutate(self::MUTATION_RATE);
         }
 
-        $genotypes = $this->sortGenotypes($genotypes);
+        while (count($newGenotypes) < Population::SIZE) {
+            $randomGenotype = $genotypes[Util::arrayRand($genotypes)];
+
+            if (in_array($randomGenotype, $newGenotypes, true)) {
+                continue;
+            }
+
+            $newGenotypes[] = $randomGenotype->mutate(self::MUTATION_RATE);
+        }
+
+        $this->sortGenotypes($genotypes);
 
         $population->setGenotypes($genotypes);
 
@@ -76,24 +111,6 @@ class PopulationManager
     public function getFitness(Genotype $genotype)
     {
         return $this->fitnessCalculator->getFitness($this->nodes, $genotype->getGenes());
-    }
-
-    /**
-     * @param array $genotypes
-     *
-     * @return array
-     */
-    private function replaceWorstGenotypesWithNewChildren(array $genotypes): array
-    {
-        list($firstChild, $secondChild) = reset($genotypes)->mate(next($genotypes));
-
-        array_pop($genotypes);
-        array_pop($genotypes);
-
-        $genotypes[] = $firstChild;
-        $genotypes[] = $secondChild;
-
-        return $genotypes;
     }
 
     /**

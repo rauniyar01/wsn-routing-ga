@@ -62,43 +62,9 @@ class NetworkExporter
         $baseStation = $network->getBaseStation();
 
         $this->addNewLine();
-        $this->addComment('Base station');
-
-        $this->addExpression(
-            sprintf(
-                "plot%d = plot(%s, %s, 'd', 'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
-                ++$plotIndex,
-                $this->convertCoordinate($baseStation->getX()),
-                $this->convertCoordinate($baseStation->getY())
-            )
-        );
-
-        $this->addNewLine();
-        $this->addComment('Cluster heads');
-
-        foreach ($network->getClusterHeads() as $node) {
-            if ($node->isDead()) {
-                continue;
-            }
-
-            $this->addExpression(
-                sprintf(
-                    "plot%d = plot(%s, %s, 's', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
-                    ++$plotIndex,
-                    $this->convertCoordinate($node->getX()),
-                    $this->convertCoordinate($node->getY())
-                )
-            );
-        }
-
-        $this->addNewLine();
         $this->addComment('Connections between cluster heads and base station');
 
         foreach ($network->getClusterHeads() as $node) {
-            if ($node->isDead()) {
-                continue;
-            }
-
             $this->addExpression(
                 sprintf(
                     "plot%d = plot([%s %s], [%s %s], '--r');",
@@ -114,31 +80,9 @@ class NetworkExporter
         }
 
         $this->addNewLine();
-        $this->addComment('Cluster nodes');
-
-        foreach ($network->getClusterNodes() as $node) {
-            if ($node->isDead()) {
-                continue;
-            }
-
-            $this->addExpression(
-                sprintf(
-                    "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');",
-                    ++$plotIndex,
-                    $this->convertCoordinate($node->getX()),
-                    $this->convertCoordinate($node->getY())
-                )
-            );
-        }
-
-        $this->addNewLine();
         $this->addComment('Connections between cluster nodes and heads');
 
         foreach ($network->getClusterNodes() as $node) {
-            if ($node->isDead()) {
-                continue;
-            }
-
             $this->addExpression(
                 sprintf(
                     "plot%d = plot([%s %s], [%s %s], '--k');",
@@ -154,10 +98,50 @@ class NetworkExporter
         }
 
         $this->addNewLine();
+        $this->addComment('Base station');
+
+        $this->addExpression(
+            sprintf(
+                "plot%d = plot(%s, %s, 'd', 'MarkerSize', 12, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
+                ++$plotIndex,
+                $this->convertCoordinate($baseStation->getX()),
+                $this->convertCoordinate($baseStation->getY())
+            )
+        );
+
+        $this->addNewLine();
+        $this->addComment('Cluster heads');
+
+        foreach ($network->getClusterHeads() as $node) {
+            $this->addExpression(
+                sprintf(
+                    "plot%d = plot(%s, %s, 's', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
+                    ++$plotIndex,
+                    $this->convertCoordinate($node->getX()),
+                    $this->convertCoordinate($node->getY())
+                )
+            );
+        }
+
+        $this->addNewLine();
+        $this->addComment('Cluster nodes');
+
+        foreach ($network->getClusterNodes() as $node) {
+            $this->addExpression(
+                sprintf(
+                    "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');",
+                    ++$plotIndex,
+                    $this->convertCoordinate($node->getX()),
+                    $this->convertCoordinate($node->getY())
+                )
+            );
+        }
+
+        $this->addNewLine();
 
         $this->addExpression('hold off;');
 
-        $this->addExpression(sprintf('axis([0 %d 0 %d]);', FIELD_SIZE, FIELD_SIZE));
+        $this->addExpression(sprintf('axis([0 %d 0 %d]);', FIELD_SIZE_X, FIELD_SIZE_Y));
 
         return $this->content;
     }

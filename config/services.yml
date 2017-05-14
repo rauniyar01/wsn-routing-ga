@@ -2,6 +2,12 @@ services:
     console:
         class: Symfony\Component\Console\Output\ConsoleOutput
 
+    base_station:
+        class: Podorozhny\Dissertation\BaseStation
+        arguments:
+            - ~ # x coordinate (have to be overwritten)
+            - ~ # y coordinate (have to be overwritten)
+
     random_location_node_factory:
         class: Podorozhny\Dissertation\RandomLocationNodeFactory
 
@@ -24,6 +30,9 @@ services:
 
     network_fitness_calculator:
         class: Podorozhny\Dissertation\NetworkFitnessCalculator
+        arguments:
+            - '@one_round_charge_reducer'
+            - '@base_station'
 
     network_runner:
         class: Podorozhny\Dissertation\NetworkRunner

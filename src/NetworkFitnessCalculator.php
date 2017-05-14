@@ -6,12 +6,24 @@ use Assert\Assert;
 
 final class NetworkFitnessCalculator
 {
-    const GOAL = 1000;
+    const GOAL = '1000000.0';
+
+    /** @var OneRoundChargeReducer */
+    private $reducer;
+
+    /** @var BaseStation */
+    private $baseStation;
 
     /**
      * @var array
      */
     private $fitnessCache = [];
+
+    public function __construct(OneRoundChargeReducer $reducer, BaseStation $baseStation)
+    {
+        $this->reducer     = $reducer;
+        $this->baseStation = $baseStation;
+    }
 
     /**
      * @param Node[] $nodes
@@ -21,12 +33,13 @@ final class NetworkFitnessCalculator
      */
     public function getFitness(array $nodes, array $genes): string
     {
-        $cacheKey = $this->getCacheKey($nodes, $genes);
+        $cacheKey = $this->getCacheKey($genes);
 
         if (array_key_exists($cacheKey, $this->fitnessCache)) {
             return $this->fitnessCache[$cacheKey];
         }
 
+        /** @var Node[] $clonedNodes */
         $clonedNodes = [];
 
         foreach ($nodes as $node) {
@@ -37,17 +50,11 @@ final class NetworkFitnessCalculator
 
         Assert::that(count($genes))->eq(count($clonedNodes));
 
-        if (array_sum($genes) === 0) {
-            return $this->fitnessCache[$cacheKey] = 0;
-        }
-
-        $baseStation = new BaseStation(FIELD_SIZE * 10 / 2, FIELD_SIZE * 10 / 2);
-
         $clusterHeads = [];
         $clusterNodes = [];
 
-        foreach ($clonedNodes as $key => $node) {
-            if (!$genes[$key]) {
+        foreach ($clonedNodes as $node) {
+            if (!$genes[$node->getId()]) {
                 continue;
             }
 
@@ -56,65 +63,54 @@ final class NetworkFitnessCalculator
             $clusterHeads[] = $node;
         }
 
-        foreach ($clonedNodes as $key => $node) {
-            if ($genes[$key]) {
+        foreach ($clonedNodes as $node) {
+            if ($genes[$node->getId()]) {
                 continue;
             }
 
-            $node->makeClusterNode($node->getNearestNeighbor($clusterHeads));
+            $nearestClusterHead = $node->getNearestNeighbor($clusterHeads);
+
+            if (!$nearestClusterHead instanceof Node ||
+                $node->distanceToNeighbor($this->baseStation) <= $node->distanceToNeighbor($nearestClusterHead)
+            ) {
+                $nearestClusterHead = $this->baseStation;
+            }
+
+            $node->makeClusterNode($nearestClusterHead);
 
             $clusterNodes[] = $node;
         }
 
-        $network = new Network($baseStation, $clusterHeads, $clusterNodes);
+        $network = new Network($this->baseStation, $clusterHeads, $clusterNodes);
 
         $totalCharge = $network->getTotalCharge();
-//        $deadNodesCount = $network->getDeadNodesCount();
 
-        (new OneRoundChargeReducer())->reduce($network);
+        $this->reducer->reduce($network);
 
         $totalChargeConsumption = bcsub($totalCharge, $network->getTotalCharge(), BC_SCALE);
 
-//        $nodesDied = $network->getDeadNodesCount() - $deadNodesCount;
-
-        $averageChargeConsumption = bcdiv($totalChargeConsumption, $network->getNodesCount(), BC_SCALE);
-
-        if ($averageChargeConsumption == 0) {
-            return $this->fitnessCache[$cacheKey] = self::GOAL;
-        }
-
-        $fitness = bcdiv(1, $averageChargeConsumption, BC_SCALE);
-
-//        if ($nodesDied > 0) {
-//            $fitness += (1 / $nodesDied);
-//        }
+        $fitness = bcdiv(1, $totalChargeConsumption, BC_SCALE);
 
         return $this->fitnessCache[$cacheKey] = $fitness;
     }
 
     /**
-     * @param Node[] $nodes
      * @param bool[] $genes
      *
      * @return string
      */
-    private function getCacheKey(array $nodes, array $genes): string
+    private function getCacheKey(array $genes): string
     {
-        $coordinates = [];
+        Assert::that(count($genes))->greaterThan(0);
 
-        foreach ($nodes as $node) {
-            $coordinates[] = sprintf('%d-%d', $node->getX(), $node->getY());
+        ksort($genes);
+
+        $strings = [];
+
+        foreach ($genes as $uuid => $isClusterNode) {
+            $strings[] = sprintf('%s:%s', $uuid, $isClusterNode ? 'true' : 'false');
         }
 
-        $genes = array_map(
-            function (bool $gene) {
-                return (int) $gene;
-            },
-            $genes
-        );
-
-        $string = implode('_', $coordinates) . '__' . implode('_', $genes);
-
-        return md5($string);
+        return md5(implode(';', $strings));
     }
 }

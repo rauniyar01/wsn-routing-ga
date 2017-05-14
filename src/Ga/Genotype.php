@@ -3,6 +3,7 @@
 namespace Podorozhny\Dissertation\Ga;
 
 use Assert\Assert;
+use Podorozhny\Dissertation\Util;
 
 class Genotype
 {
@@ -11,8 +12,11 @@ class Genotype
 
     public function __construct(array $genes)
     {
+        Assert::that(count($genes))->greaterOrEqualThan(1);
         Assert::thatAll($genes)->boolean();
-        Assert::that(count($genes))->greaterOrEqualThan(2);
+        Assert::thatAll(array_keys($genes))->uuid();
+
+        ksort($genes);
 
         $this->genes = $genes;
     }
@@ -54,9 +58,13 @@ class Genotype
             return $this;
         }
 
-        $key = array_rand($this->genes);
+        $genesToMutate = mt_rand(1, ceil(count($this->genes) / 25));
 
-        $this->genes[$key] = !$this->genes[$key];
+        for ($i = 0; $i < $genesToMutate; $i++) {
+            $key = Util::arrayRand($this->genes);
+
+            $this->genes[$key] = !$this->genes[$key];
+        }
 
         return $this;
     }
