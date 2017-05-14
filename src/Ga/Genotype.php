@@ -25,7 +25,6 @@ final class Genotype
     public function __toString(): string
     {
         return implode(
-            '',
             array_map(
                 function (bool $gene) {
                     return (int) $gene;

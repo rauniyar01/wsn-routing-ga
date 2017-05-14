@@ -1,5 +1,5 @@
 services:
-    console:
+    console_output:
         class: Symfony\Component\Console\Output\ConsoleOutput
 
     base_station:
@@ -18,9 +18,10 @@ services:
         class: Podorozhny\Dissertation\GeneticAlgorithmNetworkBuilder
         arguments:
             - '@ga_population_manager'
-            - '@console'
-            - '%genetic.generations_count%'
+            - '@console_output'
+            - '%genetic.generations_limit%'
             - '%genetic.population_size%'
+            - '%genetic.fitness_goal%'
             - '%genetic.initial_cluster_heads_ratio_min%'
             - '%genetic.initial_cluster_heads_ratio_max%'
 

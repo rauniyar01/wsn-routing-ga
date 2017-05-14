@@ -76,7 +76,11 @@ final class PopulationManager
     {
         $genotypes = $population->getGenotypes();
 
-        $eliteGenotypesCount = ceil($this->populationSize * $this->eliteGenotypeRate / 2) * 2;
+        $eliteGenotypesCount = (int) ceil($this->populationSize * $this->eliteGenotypeRate / 2) * 2;
+
+        if ($eliteGenotypesCount >= $this->populationSize) {
+            $eliteGenotypesCount = 0;
+        }
 
         /** @var Genotype[] $newGenotypes */
         $newGenotypes = [];
@@ -89,12 +93,7 @@ final class PopulationManager
             }
         }
 
-        for (
-            $i = 0;
-            count($newGenotypes) < $this->populationSize &&
-            $i < floor($this->populationSize * $this->crossoverRate / 2);
-            $i++
-        ) {
+        for ($i = 0; $i < (int) floor($this->populationSize * $this->crossoverRate / 2); $i++) {
             $fatherKey = Util::arrayRand($genotypes);
 
             do {

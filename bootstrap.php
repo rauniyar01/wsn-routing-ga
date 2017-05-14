@@ -34,8 +34,8 @@ $container->compile();
 $dumper = new PhpDumper($container);
 file_put_contents($containerCacheFile, $dumper->dump(['class' => 'PodorozhnyDissertationServiceContainer']));
 
-/** @var ConsoleOutput $console */
-$console = $container->get('console');
+/** @var ConsoleOutput $output */
+$output = $container->get('console_output');
 
 /** @var RandomLocationSensorNodeFactory $nodeFactory */
 $nodeFactory = $container->get('random_location_sensor_node_factory');
@@ -58,7 +58,7 @@ for ($i = 0; $i < $container->getParameter('sensor_nodes_count'); $i++) {
     $sensorNodes[] = $sensorNode;
 }
 
-$console->writeln(
+$output->writeln(
     sprintf(
         '<info>Starting wireless sensor network modelling. Sensor nodes count: %s. Field size: %s x %s meters.</info>',
         number_format($container->getParameter('sensor_nodes_count'), 0, '', ' '),
@@ -67,7 +67,7 @@ $console->writeln(
     )
 );
 
-$console->writeln(
+$output->writeln(
     sprintf(
         '<info>0 rounds passed. Dead sensor nodes: %d/%s. Total charge: %s.</info>',
         0,
@@ -86,7 +86,7 @@ $console->writeln(
 /** @var BaseStation $baseStation */
 $baseStation = $container->get('base_station');
 
-$firstExport = true;
+$clearExport = true;
 
 while ($isAlive = $networkRunner->run($baseStation, $sensorNodes)) {
     $baseStation = null;
@@ -95,11 +95,11 @@ while ($isAlive = $networkRunner->run($baseStation, $sensorNodes)) {
     $network = $networkRunner->getNetwork();
     $rounds  = $networkRunner->getRounds();
 
-    $networkExporter->export($network, $networkRunner->getRounds(), !$firstExport);
+    $networkExporter->export($network, $networkRunner->getRounds(), $clearExport);
 
-    $firstExport = false;
+    $clearExport = false;
 
-    $console->writeln(
+    $output->writeln(
         sprintf(
             '<info>%s %s passed. Dead sensor nodes: %s/%s. Total charge: %s.</info>',
             number_format($rounds, 0, '', ' '),
@@ -109,6 +109,4 @@ while ($isAlive = $networkRunner->run($baseStation, $sensorNodes)) {
             (float) $network->getTotalCharge()
         )
     );
-
-    die();
 }

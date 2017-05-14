@@ -17,10 +17,13 @@ final class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
     private $output;
 
     /** @var int */
-    private $generationsCount;
+    private $generationsLimit;
 
     /** @var int */
     private $populationSize;
+
+    /** @var float */
+    private $fitnessGoal;
 
     /** @var float */
     private $initialClusterHeadsRatioMin;
@@ -31,16 +34,18 @@ final class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
     public function __construct(
         PopulationManager $populationManager,
         OutputInterface $output,
-        int $generationsCount,
+        int $generationsLimit,
         int $populationSize,
+        float $fitnessGoal,
         float $initialClusterHeadsRatioMin,
         float $initialClusterHeadsRatioMax
     )
     {
         $this->populationManager           = $populationManager;
         $this->output                      = $output;
-        $this->generationsCount            = $generationsCount;
+        $this->generationsLimit            = $generationsLimit;
         $this->populationSize              = $populationSize;
+        $this->fitnessGoal                 = $fitnessGoal;
         $this->initialClusterHeadsRatioMin = $initialClusterHeadsRatioMin;
         $this->initialClusterHeadsRatioMax = $initialClusterHeadsRatioMax;
     }
@@ -75,29 +80,39 @@ final class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
         $population = $this->populationManager->create($genotypes);
 
         $bestGenotype = clone $population->getBestGenotype();
+        $bestFitness  = $this->populationManager->getFitness($bestGenotype);
 
-        $this->printStats($population);
+        $bestGenotypeSinceLastUpdate = $bestGenotype;
+        $bestFitnessSinceLastUpdate  = null;
 
-//        while ($bestFitness < NetworkFitnessCalculator::GOAL) {
-//        while ($population->getGenerationNumber() < 50 && $bestGenotype->getFitness() < 100000000) {
-        while ($population->getGenerationNumber() < $this->generationsCount) {
+        $this->printStats($population, $bestGenotypeSinceLastUpdate);
+        $bestGenotypeSinceLastUpdate = null;
+
+        while ($bestFitness < $this->fitnessGoal &&
+               ($generationNumber = $population->getGenerationNumber()) < $this->generationsLimit) {
             $this->populationManager->produceNewGeneration($population);
 
             $bestCurrentPopulationGenotype = clone $population->getBestGenotype();
+            $bestCurrentPopulationFitness  = $this->populationManager->getFitness($bestCurrentPopulationGenotype);
 
-            if ($population->getGenerationNumber() % ceil($this->generationsCount / 20) === 0 ||
-                $population->getGenerationNumber() === $this->generationsCount
+            if (is_null($bestFitnessSinceLastUpdate) ||
+                1 === bccomp($bestCurrentPopulationFitness, $bestFitnessSinceLastUpdate, BC_SCALE)
             ) {
-                $this->printStats($population);
+                $bestGenotypeSinceLastUpdate = $bestCurrentPopulationGenotype;
+                $bestFitnessSinceLastUpdate  = $bestCurrentPopulationFitness;
             }
 
-            if (1 === bccomp(
-                    $this->populationManager->getFitness($bestCurrentPopulationGenotype),
-                    $this->populationManager->getFitness($bestGenotype),
-                    BC_SCALE
-                )
+            if ($generationNumber % ceil($this->generationsLimit / 20) === 0 ||
+                $generationNumber === $this->generationsLimit
             ) {
+                $this->printStats($population, $bestGenotypeSinceLastUpdate);
+                $bestGenotypeSinceLastUpdate = null;
+                $bestFitnessSinceLastUpdate = null;
+            }
+
+            if (1 === bccomp($bestCurrentPopulationFitness, $bestFitness, BC_SCALE)) {
                 $bestGenotype = clone $bestCurrentPopulationGenotype;
+                $bestFitness  = $bestCurrentPopulationFitness;
             }
         }
 
@@ -175,26 +190,25 @@ final class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
         return new Genotype($genes);
     }
 
-    /** @param Population $population */
-    private function printStats(Population $population)
+    /**
+     * @param Population $population
+     * @param Genotype   $bestGenotypeSinceLastUpdate
+     */
+    private function printStats(Population $population, Genotype $bestGenotypeSinceLastUpdate)
     {
-        $bestGenotype = $population->getBestGenotype();
-        $genes        = $bestGenotype->getGenes();
-
-        $this->output->writeln(
-            sprintf(
-                'Generation: %s/%s. Best generation genotype fitness: %.6f. Cluster heads: %d/%d.',
-                str_pad(
-                    number_format($population->getGenerationNumber(), 0, '', ' '),
-                    mb_strlen(number_format($this->generationsCount, 0, '', ' ')),
-                    ' ',
-                    STR_PAD_LEFT
-                ),
-                number_format($this->generationsCount, 0, '', ' '),
-                $this->populationManager->getFitness($bestGenotype),
-                array_sum($genes),
-                count($genes)
-            )
+        $message = sprintf(
+            'Generation: %s/%s. Best fitness since last update: %.6f. Topology: %s.',
+            str_pad(
+                number_format($population->getGenerationNumber(), 0, '', ' '),
+                mb_strlen(number_format($this->generationsLimit, 0, '', ' ')),
+                ' ',
+                STR_PAD_LEFT
+            ),
+            number_format($this->generationsLimit, 0, '', ' '),
+            $this->populationManager->getFitness($bestGenotypeSinceLastUpdate),
+            (string) $bestGenotypeSinceLastUpdate
         );
+
+        $this->output->writeln($message);
     }
 }
