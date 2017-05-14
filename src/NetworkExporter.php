@@ -24,14 +24,14 @@ final class NetworkExporter
 
     /**
      * @param Network $network
-     * @param int     $rounds
+     * @param string  $key
      * @param bool    $clear
      *
      * @throws \Exception
      */
-    public function export(Network $network, int $rounds, bool $clear = false)
+    public function export(Network $network, string $key, bool $clear = false)
     {
-        $fileName = $this->getFilePath($rounds);
+        $fileName = $this->getFilePath($key);
 
         $directory = dirname($fileName);
 
@@ -159,13 +159,13 @@ final class NetworkExporter
     }
 
     /**
-     * @param int $rounds
+     * @param string $key
      *
      * @return string
      */
-    private function getFilePath(int $rounds): string
+    private function getFilePath(string $key): string
     {
-        return __DIR__ . sprintf('/../var/matlab/plot_network_%d_rounds.m', $rounds);
+        return __DIR__ . sprintf('/../var/matlab/plot_network_%s.m', $key);
     }
 
     /** @param string $expression */

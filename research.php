@@ -2,122 +2,143 @@
 
 namespace Podorozhny\Dissertation;
 
-//use Ramsey\Uuid\Generator\MtRandGenerator;
-//use Ramsey\Uuid\Uuid;
-//use Ramsey\Uuid\UuidFactory;
-//use Symfony\Component\Config\FileLocator;
-//use Symfony\Component\DependencyInjection\ContainerBuilder;
-//use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-//
-//ini_set('memory_limit', -1);
-//
-//mt_srand((int) (M_PI * 1000000));
-//
-//const BC_SCALE = 16;
-//
-//include __DIR__ . '/vendor/autoload.php';
-//$uuidFactory = new UuidFactory();
-//$uuidFactory->setRandomGenerator(new MtRandGenerator());
-//Uuid::setFactory($uuidFactory);
-//
-//$container = new ContainerBuilder();
-//$loader    = new YamlFileLoader($container, new FileLocator(__DIR__));
-//$loader->load('config/services.yml');
-//$loader->load('config/parameters.yml');
-//
-///** @var RandomLocationNodeFactory $nodeFactory */
-//$nodeFactory = $container->get('random_location_node_factory');
-//
-///** @var NetworkExporter $networkExporter */
-//$networkExporter = $container->get('network_exporter');
-//
-///** @var OneRoundChargeReducer $chargeReducer */
-//$chargeReducer = $container->get('one_round_charge_reducer');
-//
-///** @var GeneticAlgorithmNetworkBuilder $networkBuilder */
-//$networkBuilder = $container->get('network_builder.genetic_algorithm');
-//
-///** @var Node[] $nodes */
-//$nodes = [];
-//
-//for ($i = 0; $i < NODES_COUNT; $i++) {
-//    $node = $nodeFactory->create(FIELD_SIZE_X, FIELD_SIZE_Y);
-//
-//    $nodes[] = $node;
-//}
-//
-///** @var Node[] $clonedNodes */
-//$clonedNodes = [];
-//
-//foreach ($nodes as $node) {
-//    $clonedNodes[] = clone $node;
-//}
-//
-//$clusterHeads = [];
-//
-////$corners = [
-////    [0, 0],
-////    [FIELD_SIZE_X * 10, 0],
-////    [FIELD_SIZE_X * 10, FIELD_SIZE_X * 10],
-////    [0, FIELD_SIZE_X * 10],
-////];
-//
+use Ramsey\Uuid\Generator\MtRandGenerator;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidFactory;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+
+ini_set('memory_limit', -1);
+
+mt_srand((int) (M_PI * 1000000));
+
+const BC_SCALE = 16;
+
+include __DIR__ . '/vendor/autoload.php';
+$uuidFactory = new UuidFactory();
+$uuidFactory->setRandomGenerator(new MtRandGenerator());
+Uuid::setFactory($uuidFactory);
+
+$cacheDirectory = __DIR__ . '/var/cache';
+
+if (!is_dir($cacheDirectory) && (false === @mkdir($cacheDirectory, 0775, true)) || !is_writable($cacheDirectory)
+) {
+    throw new \Exception(sprintf('Cache directory "%s" is not writable.', $cacheDirectory));
+}
+
+$containerCacheFile = $cacheDirectory . '/container.php';
+
+$container = new ContainerBuilder();
+$loader    = new YamlFileLoader($container, new FileLocator(__DIR__));
+$loader->load('app/config/services.yml');
+$loader->load('app/config/parameters.yml');
+
+$container->compile();
+
+$dumper = new PhpDumper($container);
+file_put_contents($containerCacheFile, $dumper->dump(['class' => 'PodorozhnyDissertationServiceContainer']));
+
+/** @var RandomLocationSensorNodeFactory $nodeFactory */
+$nodeFactory = $container->get('random_location_sensor_node_factory');
+
+/** @var NetworkExporter $networkExporter */
+$networkExporter = $container->get('network_exporter');
+
+/** @var OneRoundChargeReducer $chargeReducer */
+$chargeReducer = $container->get('one_round_charge_reducer');
+
+/** @var GeneticAlgorithmNetworkBuilder $networkBuilder */
+$networkBuilder = $container->get('network_builder.genetic_algorithm');
+
+/** @var BaseStation $baseStation */
+$baseStation = $container->get('base_station');
+
+/** @var SensorNode[] $sensorNodes */
+$sensorNodes = [];
+
+$fieldSizeX = $container->getParameter('field_size.x');
+$fieldSizeY = $container->getParameter('field_size.y');
+
+for ($i = 0; $i < $container->getParameter('sensor_nodes_count'); $i++) {
+    $sensorNode = $nodeFactory->create($fieldSizeX, $fieldSizeY);
+
+    $sensorNodes[] = $sensorNode;
+}
+
+/** @var SensorNode[] $clonedSensorNodes */
+$clonedSensorNodes = [];
+
+foreach ($sensorNodes as $sensorNode) {
+    $clonedSensorNodes[] = clone $sensorNode;
+}
+
+$clusterHeads = [];
+
 //$corners = [
-//    [(FIELD_SIZE_X * 10) / 4, (FIELD_SIZE_Y * 10) / 4],
-//    [3 * (FIELD_SIZE_X * 10) / 4, (FIELD_SIZE_Y * 10) / 4],
-//    [3 * (FIELD_SIZE_X * 10) / 4, 3 * (FIELD_SIZE_Y * 10) / 4],
-//    [(FIELD_SIZE_X * 10) / 4, 3 * (FIELD_SIZE_Y * 10) / 4],
+//    [0, 0],
+//    [$fieldSizeX * 10, 0],
+//    [$fieldSizeX * 10, $fieldSizeX * 10],
+//    [0, $fieldSizeX * 10],
 //];
-//
-//$distances = [];
-//
-//foreach ($nodes as $key => $node) {
-//    foreach ($corners as $k => $corner) {
-//        $distance = $node->distanceTo($corner[0], $corner[1]);
-//
-//        if (!array_key_exists($k, $distances) || $distance < $distances[$k]['d']) {
-//            $distances[$k] = ['d' => $distance, 'k' => $key];
-//        }
-//    }
-//}
-//
-//$clusterHeads[] = $nodes[$distances[0]['k']];
-//$clusterHeads[] = $nodes[$distances[1]['k']];
-//$clusterHeads[] = $nodes[$distances[2]['k']];
-//$clusterHeads[] = $nodes[$distances[3]['k']];
-//
-//unset($nodes[$distances[0]['k']]);
-//unset($nodes[$distances[1]['k']]);
-//unset($nodes[$distances[2]['k']]);
-//unset($nodes[$distances[3]['k']]);
-//
-//foreach ($clusterHeads as $node) {
-//    $node->makeClusterHead();
-//}
-//
-//foreach ($nodes as $node) {
-//    $nearestClusterHead = $node->getNearestNeighbor($clusterHeads);
-//
-//    if (!$nearestClusterHead instanceof Node ||
-//        $node->distanceToNeighbor($baseStation) <= $node->distanceToNeighbor($nearestClusterHead)
-//    ) {
-//        $nearestClusterHead = $baseStation;
-//    }
-//
-//    $node->makeClusterNode($nearestClusterHead);
-//}
-//
-//$network = new Network($baseStation, $clusterHeads, $nodes);
-//
-//$networkExporter->export($network, 1, true);
-//
-//$chargeReducer->reduce($network);
-//
-////$geneticNetwork = $networkBuilder->build($baseStation, $clonedNodes);
-////
-////$networkExporter->export($geneticNetwork, 2, false);
-////
-////$chargeReducer->reduce($geneticNetwork);
-//
-//var_dump($network->getTotalCharge());
-////var_dump($geneticNetwork->getTotalCharge());
+
+$corners = [
+    [($fieldSizeX * 10) / 4, ($fieldSizeX * 10) / 4],
+    [3 * ($fieldSizeX * 10) / 4, ($fieldSizeX * 10) / 4],
+    [3 * ($fieldSizeX * 10) / 4, 3 * ($fieldSizeX * 10) / 4],
+    [($fieldSizeX * 10) / 4, 3 * ($fieldSizeX * 10) / 4],
+];
+
+$distances = [];
+
+foreach ($sensorNodes as $key => $sensorNode) {
+    foreach ($corners as $k => $corner) {
+        $distance = $sensorNode->distanceTo($corner[0], $corner[1]);
+
+        if (!array_key_exists($k, $distances) || $distance < $distances[$k]['d']) {
+            $distances[$k] = ['d' => $distance, 'k' => $key];
+        }
+    }
+}
+
+$clusterHeads[] = $sensorNodes[$distances[0]['k']];
+$clusterHeads[] = $sensorNodes[$distances[1]['k']];
+$clusterHeads[] = $sensorNodes[$distances[2]['k']];
+$clusterHeads[] = $sensorNodes[$distances[3]['k']];
+
+unset($sensorNodes[$distances[0]['k']]);
+unset($sensorNodes[$distances[1]['k']]);
+unset($sensorNodes[$distances[2]['k']]);
+unset($sensorNodes[$distances[3]['k']]);
+
+foreach ($clusterHeads as $sensorNode) {
+    $sensorNode->makeClusterHead();
+}
+
+foreach ($sensorNodes as $sensorNode) {
+    $nearestClusterHead = $sensorNode->getNearestNeighbor($clusterHeads);
+
+    if (!$nearestClusterHead instanceof Node ||
+        $sensorNode->distanceToNeighbor($baseStation) <= $sensorNode->distanceToNeighbor($nearestClusterHead)
+    ) {
+        $nearestClusterHead = $baseStation;
+    }
+
+    $sensorNode->makeClusterNode($nearestClusterHead);
+}
+
+$network = new Network($baseStation, $clusterHeads, $sensorNodes);
+
+$networkExporter->export($network, 'handmade', true);
+
+$chargeReducer->reduce($network);
+
+$geneticNetwork = $networkBuilder->build($baseStation, $clonedSensorNodes);
+
+$networkExporter->export($geneticNetwork, 'genetic', false);
+
+$chargeReducer->reduce($geneticNetwork);
+
+var_dump($network->getTotalCharge());
+var_dump($geneticNetwork->getTotalCharge());
