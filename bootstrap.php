@@ -102,15 +102,7 @@ while ($isAlive = $networkRunner->run($baseStation, $sensorNodes)) {
     $network = $networkRunner->getNetwork();
     $rounds  = $networkRunner->getRounds();
 
-    $networkExporter->export(
-        $network,
-        sprintf(
-            '%d_%s',
-            $rounds,
-            Util::pluralForm($rounds, 'round', 'rounds', 'rounds')
-        ),
-        $clearExport
-    );
+    $networkExporter->export($network, sprintf('round_%d', $rounds), $clearExport);
 
     $clearExport = false;
 
