@@ -8,53 +8,68 @@ use Podorozhny\Dissertation\Ga\Population;
 use Podorozhny\Dissertation\Ga\PopulationManager;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
+final class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
 {
-    const GENERATIONS_COUNT = 20;
-//    const GENERATIONS_COUNT = 500;
-//    const GENERATIONS_COUNT               = 1000;
-    const INITIAL_CLUSTER_HEADS_RATIO_MIN = 0.05;
-    const INITIAL_CLUSTER_HEADS_RATIO_MAX = 0.1;
-
     /** @var PopulationManager */
     private $populationManager;
 
     /** @var OutputInterface */
     private $output;
 
-    public function __construct(PopulationManager $populationManager, OutputInterface $output)
+    /** @var int */
+    private $generationsCount;
+
+    /** @var int */
+    private $populationSize;
+
+    /** @var float */
+    private $initialClusterHeadsRatioMin;
+
+    /** @var float */
+    private $initialClusterHeadsRatioMax;
+
+    public function __construct(
+        PopulationManager $populationManager,
+        OutputInterface $output,
+        int $generationsCount,
+        int $populationSize,
+        float $initialClusterHeadsRatioMin,
+        float $initialClusterHeadsRatioMax
+    )
     {
-        $this->populationManager = $populationManager;
-        $this->output            = $output;
+        $this->populationManager           = $populationManager;
+        $this->output                      = $output;
+        $this->generationsCount            = $generationsCount;
+        $this->populationSize              = $populationSize;
+        $this->initialClusterHeadsRatioMin = $initialClusterHeadsRatioMin;
+        $this->initialClusterHeadsRatioMax = $initialClusterHeadsRatioMax;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function build(BaseStation $baseStation, array $nodes)
+    /** {@inheritdoc} */
+    public function build(BaseStation $baseStation, array $sensorNodes)
     {
-        Assertion::allIsInstanceOf($nodes, Node::class);
+        Assertion::allIsInstanceOf($sensorNodes, SensorNode::class);
 
-        /** @var Node[] $nodes */
-        $nodes = array_values(
+        /** @var SensorNode[] $sensorNodes */
+        $sensorNodes = array_values(
             array_filter(
-                $nodes,
-                function (Node $node) {
-                    return !$node->isDead();
+                $sensorNodes,
+                function (SensorNode $sensorNodes) {
+                    return !$sensorNodes->isDead();
                 }
             )
         );
 
-        if (count($nodes) < 1) {
+        if (count($sensorNodes) < 1) {
             return false;
         }
 
-        $this->populationManager->setNodes($nodes);
+        $this->populationManager->setSensorNodes($sensorNodes);
 
         $genotypes = [];
 
-        for ($i = 0; $i < Population::SIZE; $i++) {
-            $genotypes[] = $this->getRandomGenotype($nodes);
+        for ($i = 0; $i < $this->populationSize; $i++) {
+            $genotypes[] = $this->getRandomGenotype($sensorNodes);
         }
 
         $population = $this->populationManager->create($genotypes);
@@ -65,13 +80,14 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
 
 //        while ($bestFitness < NetworkFitnessCalculator::GOAL) {
 //        while ($population->getGenerationNumber() < 50 && $bestGenotype->getFitness() < 100000000) {
-        while ($population->getGenerationNumber() < self::GENERATIONS_COUNT) {
+        while ($population->getGenerationNumber() < $this->generationsCount) {
             $this->populationManager->produceNewGeneration($population);
 
             $bestCurrentPopulationGenotype = clone $population->getBestGenotype();
 
-//            if (0 !== bccomp($bestCurrentPopulationFitness, $bestFitness, BC_SCALE)) {
-            if ($population->getGenerationNumber() % (self::GENERATIONS_COUNT / 20) === 0) {
+            if ($population->getGenerationNumber() % ceil($this->generationsCount / 20) === 0 ||
+                $population->getGenerationNumber() === $this->generationsCount
+            ) {
                 $this->printStats($population);
             }
 
@@ -99,32 +115,32 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
         $clusterHeads = [];
         $clusterNodes = [];
 
-        foreach ($nodes as $node) {
-            if (!$genes[$node->getId()]) {
+        foreach ($sensorNodes as $sensorNode) {
+            if (!$genes[$sensorNode->getId()]) {
                 continue;
             }
 
-            $node->makeClusterHead();
+            $sensorNode->makeClusterHead();
 
-            $clusterHeads[] = $node;
+            $clusterHeads[] = $sensorNode;
         }
 
-        foreach ($nodes as $node) {
-            if ($genes[$node->getId()]) {
+        foreach ($sensorNodes as $sensorNode) {
+            if ($genes[$sensorNode->getId()]) {
                 continue;
             }
 
-            $nearestClusterHead = $node->getNearestNeighbor($clusterHeads);
+            $nearestClusterHead = $sensorNode->getNearestNeighbor($clusterHeads);
 
             if (!$nearestClusterHead instanceof Node ||
-                $node->distanceToNeighbor($baseStation) <= $node->distanceToNeighbor($nearestClusterHead)
+                $sensorNode->distanceToNeighbor($baseStation) <= $sensorNode->distanceToNeighbor($nearestClusterHead)
             ) {
                 $nearestClusterHead = $baseStation;
             }
 
-            $node->makeClusterNode($nearestClusterHead);
+            $sensorNode->makeClusterNode($nearestClusterHead);
 
-            $clusterNodes[] = $node;
+            $clusterNodes[] = $sensorNode;
         }
 
         return new Network($baseStation, $clusterHeads, $clusterNodes);
@@ -144,8 +160,8 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
         }
 
         $clusterHeadsRatio = mt_rand(
-            100 * self::INITIAL_CLUSTER_HEADS_RATIO_MIN,
-            100 * self::INITIAL_CLUSTER_HEADS_RATIO_MAX
+            100 * $this->initialClusterHeadsRatioMin,
+            100 * $this->initialClusterHeadsRatioMax
         );
 
         $clusterHeadsRatio /= 100;
@@ -159,28 +175,25 @@ class GeneticAlgorithmNetworkBuilder implements NetworkBuilder
         return new Genotype($genes);
     }
 
-    /**
-     * @param Population $population
-     */
+    /** @param Population $population */
     private function printStats(Population $population)
     {
-        $bestGenotype       = $population->getBestGenotype();
-        $bestCurrentFitness = $this->populationManager->getFitness($bestGenotype);
+        $bestGenotype = $population->getBestGenotype();
+        $genes        = $bestGenotype->getGenes();
 
         $this->output->writeln(
             sprintf(
-                'Generation: %s / %s. Best fitness: %.6f / %.6f. Cluster heads: %d/%d.',
+                'Generation: %s/%s. Best generation genotype fitness: %.6f. Cluster heads: %d/%d.',
                 str_pad(
                     number_format($population->getGenerationNumber(), 0, '', ' '),
-                    mb_strlen(number_format(self::GENERATIONS_COUNT, 0, '', ' ')),
+                    mb_strlen(number_format($this->generationsCount, 0, '', ' ')),
                     ' ',
                     STR_PAD_LEFT
                 ),
-                number_format(self::GENERATIONS_COUNT, 0, '', ' '),
-                $bestCurrentFitness,
+                number_format($this->generationsCount, 0, '', ' '),
                 $this->populationManager->getFitness($bestGenotype),
-                array_sum($bestGenotype->getGenes()),
-                count($bestGenotype->getGenes())
+                array_sum($genes),
+                count($genes)
             )
         );
     }

@@ -6,17 +6,13 @@ use Assert\Assert;
 
 final class NetworkFitnessCalculator
 {
-    const GOAL = '1000000.0';
-
     /** @var OneRoundChargeReducer */
     private $reducer;
 
     /** @var BaseStation */
     private $baseStation;
 
-    /**
-     * @var array
-     */
+    /** @var array */
     private $fitnessCache = [];
 
     public function __construct(OneRoundChargeReducer $reducer, BaseStation $baseStation)
@@ -26,12 +22,12 @@ final class NetworkFitnessCalculator
     }
 
     /**
-     * @param Node[] $nodes
-     * @param bool[] $genes
+     * @param SensorNode[] $sensorNodes
+     * @param bool[]       $genes
      *
      * @return string
      */
-    public function getFitness(array $nodes, array $genes): string
+    public function getFitness(array $sensorNodes, array $genes): string
     {
         $cacheKey = $this->getCacheKey($genes);
 
@@ -39,46 +35,48 @@ final class NetworkFitnessCalculator
             return $this->fitnessCache[$cacheKey];
         }
 
-        /** @var Node[] $clonedNodes */
-        $clonedNodes = [];
+        $clonedSensorNodes = [];
 
-        foreach ($nodes as $node) {
-            $clonedNodes[] = clone $node;
+        foreach ($sensorNodes as $sensorNode) {
+            $clonedSensorNodes[] = clone $sensorNode;
         }
+
+        $sensorNodes = $clonedSensorNodes;
 
         Assert::thatAll($genes)->boolean();
 
-        Assert::that(count($genes))->eq(count($clonedNodes));
+        Assert::that(count($genes))->eq(count($sensorNodes));
 
         $clusterHeads = [];
         $clusterNodes = [];
 
-        foreach ($clonedNodes as $node) {
-            if (!$genes[$node->getId()]) {
+        foreach ($sensorNodes as $sensorNode) {
+            if (!$genes[$sensorNode->getId()]) {
                 continue;
             }
 
-            $node->makeClusterHead();
+            $sensorNode->makeClusterHead();
 
-            $clusterHeads[] = $node;
+            $clusterHeads[] = $sensorNode;
         }
 
-        foreach ($clonedNodes as $node) {
-            if ($genes[$node->getId()]) {
+        foreach ($sensorNodes as $sensorNode) {
+            if ($genes[$sensorNode->getId()]) {
                 continue;
             }
 
-            $nearestClusterHead = $node->getNearestNeighbor($clusterHeads);
+            $nearestClusterHead = $sensorNode->getNearestNeighbor($clusterHeads);
 
             if (!$nearestClusterHead instanceof Node ||
-                $node->distanceToNeighbor($this->baseStation) <= $node->distanceToNeighbor($nearestClusterHead)
+                $sensorNode->distanceToNeighbor($this->baseStation) <=
+                $sensorNode->distanceToNeighbor($nearestClusterHead)
             ) {
                 $nearestClusterHead = $this->baseStation;
             }
 
-            $node->makeClusterNode($nearestClusterHead);
+            $sensorNode->makeClusterNode($nearestClusterHead);
 
-            $clusterNodes[] = $node;
+            $clusterNodes[] = $sensorNode;
         }
 
         $network = new Network($this->baseStation, $clusterHeads, $clusterNodes);

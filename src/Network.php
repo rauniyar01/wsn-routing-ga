@@ -4,62 +4,52 @@ namespace Podorozhny\Dissertation;
 
 use Assert\Assertion;
 
-class Network
+final class Network
 {
     /** @var BaseStation */
     private $baseStation;
 
-    /** @var Node[] */
+    /** @var SensorNode[] */
     private $clusterHeads;
 
-    /** @var Node[] */
+    /** @var SensorNode[] */
     private $clusterNodes;
 
     public function __construct(BaseStation $baseStation, array $clusterHeads, array $clusterNodes)
     {
-        Assertion::allIsInstanceOf($clusterHeads, Node::class);
-        Assertion::allIsInstanceOf($clusterNodes, Node::class);
+        Assertion::allIsInstanceOf($clusterHeads, SensorNode::class);
+        Assertion::allIsInstanceOf($clusterNodes, SensorNode::class);
 
         $this->baseStation  = $baseStation;
         $this->clusterHeads = $clusterHeads;
         $this->clusterNodes = $clusterNodes;
     }
 
-    /**
-     * @return BaseStation
-     */
+    /** @return BaseStation */
     public function getBaseStation(): BaseStation
     {
         return $this->baseStation;
     }
 
-    /**
-     * @return Node[]
-     */
+    /** @return SensorNode[] */
     public function getClusterHeads(): array
     {
         return $this->clusterHeads;
     }
 
-    /**
-     * @return Node[]
-     */
+    /** @return SensorNode[] */
     public function getClusterNodes(): array
     {
         return $this->clusterNodes;
     }
 
-    /**
-     * @return Node[]
-     */
-    public function getNodes(): array
+    /** @return SensorNode[] */
+    public function getSensorNodes(): array
     {
         return array_merge($this->clusterHeads, $this->clusterNodes);
     }
 
-    /**
-     * @return bool
-     */
+    /** @return bool */
     public function isAlive(): bool
     {
         if (count($this->getClusterNodes()) < 1) {
@@ -69,33 +59,27 @@ class Network
         return true;
     }
 
-    /**
-     * @return int
-     */
-    public function getNodesCount(): int
+    /** @return int */
+    public function getSensorNodesCount(): int
     {
-        return count($this->getNodes());
+        return count($this->getSensorNodes());
     }
 
-    /**
-     * @return string
-     */
+    /** @return string */
     public function getTotalCharge(): string
     {
         $totalCharge = 0;
 
-        foreach ($this->getNodes() as $node) {
+        foreach ($this->getSensorNodes() as $node) {
             $totalCharge = bcadd($totalCharge, $node->getCharge(), BC_SCALE);
         }
 
         return $totalCharge;
     }
 
-    /**
-     * @return string
-     */
+    /** @return string */
     public function getAverageCharge(): string
     {
-        return bcdiv($this->getTotalCharge(), $this->getNodesCount(), BC_SCALE);
+        return bcdiv($this->getTotalCharge(), $this->getSensorNodesCount(), BC_SCALE);
     }
 }

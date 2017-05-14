@@ -5,7 +5,7 @@ namespace Podorozhny\Dissertation\Ga;
 use Assert\Assert;
 use Podorozhny\Dissertation\Util;
 
-class Genotype
+final class Genotype
 {
     /** @var bool[] */
     private $genes;
@@ -21,9 +21,7 @@ class Genotype
         $this->genes = $genes;
     }
 
-    /**
-     * @return string
-     */
+    /** @return string */
     public function __toString(): string
     {
         return implode(
@@ -37,9 +35,7 @@ class Genotype
         );
     }
 
-    /**
-     * @return bool[]
-     */
+    /** @return bool[] */
     public function getGenes(): array
     {
         return $this->genes;

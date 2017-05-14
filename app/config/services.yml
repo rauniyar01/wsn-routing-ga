@@ -5,11 +5,11 @@ services:
     base_station:
         class: Podorozhny\Dissertation\BaseStation
         arguments:
-            - ~ # x coordinate (have to be overwritten)
-            - ~ # y coordinate (have to be overwritten)
+            - '%base_station.x%'
+            - '%base_station.y%'
 
-    random_location_node_factory:
-        class: Podorozhny\Dissertation\RandomLocationNodeFactory
+    random_location_sensor_node_factory:
+        class: Podorozhny\Dissertation\RandomLocationSensorNodeFactory
 
     network_builder.random:
         class: Podorozhny\Dissertation\RandomNetworkBuilder
@@ -19,14 +19,24 @@ services:
         arguments:
             - '@ga_population_manager'
             - '@console'
+            - '%genetic.generations_count%'
+            - '%genetic.population_size%'
+            - '%genetic.initial_cluster_heads_ratio_min%'
+            - '%genetic.initial_cluster_heads_ratio_max%'
 
     one_round_charge_reducer:
         class: Podorozhny\Dissertation\OneRoundChargeReducer
+        arguments:
+            - '%iterations_per_round%'
 
     ga_population_manager:
         class: Podorozhny\Dissertation\Ga\PopulationManager
         arguments:
             - '@network_fitness_calculator'
+            - '%genetic.population_size%'
+            - '%genetic.elite_genotype_rate%'
+            - '%genetic.crossover_rate%'
+            - '%genetic.mutation_rate%'
 
     network_fitness_calculator:
         class: Podorozhny\Dissertation\NetworkFitnessCalculator
@@ -37,9 +47,11 @@ services:
     network_runner:
         class: Podorozhny\Dissertation\NetworkRunner
         arguments:
-#            - '@network_builder.random'
             - '@network_builder.genetic_algorithm'
             - '@one_round_charge_reducer'
 
     network_exporter:
         class: Podorozhny\Dissertation\NetworkExporter
+        arguments:
+            - '%field_size.x%'
+            - '%field_size.y%'

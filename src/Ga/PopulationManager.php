@@ -2,47 +2,68 @@
 
 namespace Podorozhny\Dissertation\Ga;
 
+use Assert\Assert;
 use Podorozhny\Dissertation\NetworkFitnessCalculator;
-use Podorozhny\Dissertation\Node;
+use Podorozhny\Dissertation\SensorNode;
 use Podorozhny\Dissertation\Util;
 
-class PopulationManager
+final class PopulationManager
 {
-    const ELITE_GENOTYPE_RATE = 0.1;
-    const CROSSOVER_RATE      = 0.6;
-
-    const MUTATION_RATE       = 0.5;
-
     /** @var NetworkFitnessCalculator */
     private $fitnessCalculator;
 
-    /** @var Node[] */
-    private $nodes;
+    /** @var int */
+    private $populationSize;
 
-    public function __construct(NetworkFitnessCalculator $fitnessCalculator)
+    /** @var float */
+    private $eliteGenotypeRate;
+
+    /** @var float */
+    private $crossoverRate;
+
+    /** @var float */
+    private $mutationRate;
+
+    /** @var SensorNode[] */
+    private $sensorNodes;
+
+    public function __construct(
+        NetworkFitnessCalculator $fitnessCalculator,
+        int $populationSize,
+        float $eliteGenotypeRate,
+        float $crossoverRate,
+        float $mutationRate
+    )
     {
         $this->fitnessCalculator = $fitnessCalculator;
+        $this->populationSize    = $populationSize;
+        $this->eliteGenotypeRate = $eliteGenotypeRate;
+        $this->crossoverRate     = $crossoverRate;
+        $this->mutationRate      = $mutationRate;
     }
 
     /**
-     * @param array $nodes
+     * @param array $sensorNodes
      *
      * @return PopulationManager
      */
-    public function setNodes(array $nodes): self
+    public function setSensorNodes(array $sensorNodes): self
     {
-        $this->nodes = $nodes;
+        $this->sensorNodes = $sensorNodes;
 
         return $this;
     }
 
     /**
-     * @param array $genotypes
+     * @param Genotype[] $genotypes
      *
      * @return Population
      */
     public function create(array $genotypes): Population
     {
+        Assert::thatAll($genotypes)->isInstanceOf(Genotype::class);
+        Assert::that(count($genotypes))->eq($this->populationSize);
+
         return new Population($this->sortGenotypes($genotypes));
     }
 
@@ -55,7 +76,7 @@ class PopulationManager
     {
         $genotypes = $population->getGenotypes();
 
-        $eliteGenotypesCount = ceil(Population::SIZE * self::ELITE_GENOTYPE_RATE / 2) * 2;
+        $eliteGenotypesCount = ceil($this->populationSize * $this->eliteGenotypeRate / 2) * 2;
 
         /** @var Genotype[] $newGenotypes */
         $newGenotypes = [];
@@ -64,11 +85,16 @@ class PopulationManager
             $newGenotypes[$i] = $genotypes[$i];
 
             if ($i < $eliteGenotypesCount / 2) {
-                $newGenotypes[$i]->mutate(self::MUTATION_RATE);
+                $newGenotypes[$i]->mutate($this->mutationRate);
             }
         }
 
-        for ($i = 0; $i < floor(Population::SIZE * self::CROSSOVER_RATE / 2); $i++) {
+        for (
+            $i = 0;
+            count($newGenotypes) < $this->populationSize &&
+            $i < floor($this->populationSize * $this->crossoverRate / 2);
+            $i++
+        ) {
             $fatherKey = Util::arrayRand($genotypes);
 
             do {
@@ -80,18 +106,18 @@ class PopulationManager
 
             list($firstChild, $secondChild) = $father->mate($mother);
 
-            $newGenotypes[] = $firstChild->mutate(self::MUTATION_RATE);
-            $newGenotypes[] = $secondChild->mutate(self::MUTATION_RATE);
+            $newGenotypes[] = $firstChild->mutate($this->mutationRate);
+            $newGenotypes[] = $secondChild->mutate($this->mutationRate);
         }
 
-        while (count($newGenotypes) < Population::SIZE) {
+        while (count($newGenotypes) < $this->populationSize) {
             $randomGenotype = $genotypes[Util::arrayRand($genotypes)];
 
             if (in_array($randomGenotype, $newGenotypes, true)) {
                 continue;
             }
 
-            $newGenotypes[] = $randomGenotype->mutate(self::MUTATION_RATE);
+            $newGenotypes[] = $randomGenotype->mutate($this->mutationRate);
         }
 
         $this->sortGenotypes($genotypes);
@@ -110,7 +136,7 @@ class PopulationManager
      */
     public function getFitness(Genotype $genotype)
     {
-        return $this->fitnessCalculator->getFitness($this->nodes, $genotype->getGenes());
+        return $this->fitnessCalculator->getFitness($this->sensorNodes, $genotype->getGenes());
     }
 
     /**

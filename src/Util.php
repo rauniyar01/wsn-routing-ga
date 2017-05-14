@@ -4,7 +4,7 @@ namespace Podorozhny\Dissertation;
 
 use Assert\Assert;
 
-class Util
+final class Util
 {
     /**
      * @param array $items

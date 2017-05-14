@@ -2,7 +2,7 @@
 
 namespace Podorozhny\Dissertation;
 
-class NetworkRunner
+final class NetworkRunner
 {
     /** @var int */
     private $rounds = 0;
@@ -22,17 +22,13 @@ class NetworkRunner
         $this->reducer = $reducer;
     }
 
-    /**
-     * @return int
-     */
+    /** @return int */
     public function getRounds(): int
     {
         return $this->rounds;
     }
 
-    /**
-     * @return Network
-     */
+    /** @return Network */
     public function getNetwork(): Network
     {
         return $this->network;
@@ -40,26 +36,26 @@ class NetworkRunner
 
     /**
      * @param BaseStation|null $baseStation
-     * @param Node[]           $nodes
+     * @param SensorNode[]     $sensorNodes
      *
      * @return bool
      */
-    public function run(BaseStation $baseStation = null, array $nodes = []): bool
+    public function run(BaseStation $baseStation = null, array $sensorNodes = []): bool
     {
         if ($this->network instanceof Network) {
             $baseStation = $this->network->getBaseStation();
-            $nodes       = $this->network->getNodes();
+            $sensorNodes = $this->network->getSensorNodes();
         }
 
         if (!$baseStation instanceof BaseStation) {
             throw new \InvalidArgumentException('No base station provided!');
         }
 
-        if (count($nodes) === 0) {
-            throw new \InvalidArgumentException('No nodes provided!');
+        if (count($sensorNodes) === 0) {
+            throw new \InvalidArgumentException('No sensor nodes provided!');
         }
 
-        $this->network = $this->builder->build($baseStation, $nodes);
+        $this->network = $this->builder->build($baseStation, $sensorNodes);
 
         if (!$this->network instanceof Network) {
             return false;
@@ -67,8 +63,8 @@ class NetworkRunner
 
         $genes = [];
 
-        foreach ($nodes as $node) {
-            $genes[$node->getId()] = $node->isClusterHead();
+        foreach ($sensorNodes as $sensorNode) {
+            $genes[$sensorNode->getId()] = $sensorNode->isClusterHead();
         }
 
         $this->reducer->reduce($this->network);

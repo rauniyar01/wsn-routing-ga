@@ -4,10 +4,23 @@ namespace Podorozhny\Dissertation;
 
 use Symfony\Component\Finder\Finder;
 
-class NetworkExporter
+/** @todo use symfony console component maybe */
+final class NetworkExporter
 {
+    /** @var int */
+    private $fieldSizeX;
+
+    /** @var int */
+    private $fieldSizeY;
+
     /** @var string */
     private $content;
+
+    public function __construct(int $fieldSizeX, int $fieldSizeY)
+    {
+        $this->fieldSizeX = $fieldSizeX;
+        $this->fieldSizeY = $fieldSizeY;
+    }
 
     /**
      * @param Network $network
@@ -23,9 +36,8 @@ class NetworkExporter
         $directory = dirname($fileName);
 
         if ($clear) {
+            /** @var \SplFileInfo $file */
             foreach ((new Finder())->files()->in($directory) as $file) {
-                /** @var \SplFileInfo $file */
-
                 unlink($file->getRealPath());
             }
         }
@@ -64,14 +76,14 @@ class NetworkExporter
         $this->addNewLine();
         $this->addComment('Connections between cluster heads and base station');
 
-        foreach ($network->getClusterHeads() as $node) {
+        foreach ($network->getClusterHeads() as $sensorNode) {
             $this->addExpression(
                 sprintf(
                     "plot%d = plot([%s %s], [%s %s], '--r');",
                     ++$plotIndex,
-                    $this->convertCoordinate($node->getX()),
+                    $this->convertCoordinate($sensorNode->getX()),
                     $this->convertCoordinate($baseStation->getX()),
-                    $this->convertCoordinate($node->getY()),
+                    $this->convertCoordinate($sensorNode->getY()),
                     $this->convertCoordinate($baseStation->getY())
                 )
             );
@@ -82,15 +94,15 @@ class NetworkExporter
         $this->addNewLine();
         $this->addComment('Connections between cluster nodes and heads');
 
-        foreach ($network->getClusterNodes() as $node) {
+        foreach ($network->getClusterNodes() as $sensorNode) {
             $this->addExpression(
                 sprintf(
                     "plot%d = plot([%s %s], [%s %s], '--k');",
                     ++$plotIndex,
-                    $this->convertCoordinate($node->getX()),
-                    $this->convertCoordinate($node->getClusterHead()->getX()),
-                    $this->convertCoordinate($node->getY()),
-                    $this->convertCoordinate($node->getClusterHead()->getY())
+                    $this->convertCoordinate($sensorNode->getX()),
+                    $this->convertCoordinate($sensorNode->getClusterHead()->getX()),
+                    $this->convertCoordinate($sensorNode->getY()),
+                    $this->convertCoordinate($sensorNode->getClusterHead()->getY())
                 )
             );
 
@@ -112,13 +124,13 @@ class NetworkExporter
         $this->addNewLine();
         $this->addComment('Cluster heads');
 
-        foreach ($network->getClusterHeads() as $node) {
+        foreach ($network->getClusterHeads() as $sensorNode) {
             $this->addExpression(
                 sprintf(
                     "plot%d = plot(%s, %s, 's', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');",
                     ++$plotIndex,
-                    $this->convertCoordinate($node->getX()),
-                    $this->convertCoordinate($node->getY())
+                    $this->convertCoordinate($sensorNode->getX()),
+                    $this->convertCoordinate($sensorNode->getY())
                 )
             );
         }
@@ -126,13 +138,13 @@ class NetworkExporter
         $this->addNewLine();
         $this->addComment('Cluster nodes');
 
-        foreach ($network->getClusterNodes() as $node) {
+        foreach ($network->getClusterNodes() as $sensorNode) {
             $this->addExpression(
                 sprintf(
                     "plot%d = plot(%s, %s, 'd', 'MarkerSize', 8, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'b');",
                     ++$plotIndex,
-                    $this->convertCoordinate($node->getX()),
-                    $this->convertCoordinate($node->getY())
+                    $this->convertCoordinate($sensorNode->getX()),
+                    $this->convertCoordinate($sensorNode->getY())
                 )
             );
         }
@@ -141,7 +153,7 @@ class NetworkExporter
 
         $this->addExpression('hold off;');
 
-        $this->addExpression(sprintf('axis([0 %d 0 %d]);', FIELD_SIZE_X, FIELD_SIZE_Y));
+        $this->addExpression(sprintf('axis([0 %d 0 %d]);', $this->fieldSizeX, $this->fieldSizeY));
 
         return $this->content;
     }
@@ -156,9 +168,7 @@ class NetworkExporter
         return __DIR__ . sprintf('/../var/matlab/plot_network_%d_rounds.m', $rounds);
     }
 
-    /**
-     * @param string $expression
-     */
+    /** @param string $expression */
     private function addExpression(string $expression)
     {
         $this->content .= $expression;
@@ -166,9 +176,7 @@ class NetworkExporter
         $this->addNewLine();
     }
 
-    /**
-     * @param string $comment
-     */
+    /** @param string $comment */
     private function addComment(string $comment)
     {
         $this->content .= sprintf('%% %s', $comment);
@@ -176,9 +184,7 @@ class NetworkExporter
         $this->addNewLine();
     }
 
-    /**
-     * @return void
-     */
+    /** @return void */
     private function addNewLine()
     {
         $this->content .= "\n";

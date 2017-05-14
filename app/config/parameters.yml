@@ -1,0 +1,15 @@
+parameters:
+    sensor_nodes_count: 100
+    field_size.x: 1000
+    field_size.y: 1000
+    base_station.x: 500
+    base_station.y: 500
+    iterations_per_round: 24
+    genetic.generations_count: 10000
+    genetic.population_size: 20
+    genetic.elite_genotype_rate: 0.1
+    genetic.crossover_rate: 0.6
+    genetic.mutation_rate: 0.9
+    genetic.initial_cluster_heads_ratio_min: 0.025
+    genetic.initial_cluster_heads_ratio_max: 0.1
+    genetic.fitness_goal: 1000000

@@ -8,6 +8,7 @@ use Ramsey\Uuid\UuidFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 ini_set('memory_limit', -1);
@@ -16,28 +17,28 @@ mt_srand((int) (M_PI * 1000000));
 
 const BC_SCALE = 16;
 
-const NODES_COUNT            = 100;
-const FIELD_SIZE_X           = 100;
-const FIELD_SIZE_Y           = 100;
-const ROUND_ITERATIONS_COUNT = 24;
-
 include __DIR__ . '/vendor/autoload.php';
 $uuidFactory = new UuidFactory();
 $uuidFactory->setRandomGenerator(new MtRandGenerator());
 Uuid::setFactory($uuidFactory);
 
+$containerCacheFile = __DIR__ . '/var/cache/container.php';
+
 $container = new ContainerBuilder();
 $loader    = new YamlFileLoader($container, new FileLocator(__DIR__));
-$loader->load('config/services.yml');
+$loader->load('app/config/services.yml');
+$loader->load('app/config/parameters.yml');
 
-$container->getDefinition('base_station')
-    ->setArguments([FIELD_SIZE_X * 10 / 2, FIELD_SIZE_Y * 10 / 2]);
+$container->compile();
+
+$dumper = new PhpDumper($container);
+file_put_contents($containerCacheFile, $dumper->dump(['class' => 'PodorozhnyDissertationServiceContainer']));
 
 /** @var ConsoleOutput $console */
 $console = $container->get('console');
 
-/** @var RandomLocationNodeFactory $nodeFactory */
-$nodeFactory = $container->get('random_location_node_factory');
+/** @var RandomLocationSensorNodeFactory $nodeFactory */
+$nodeFactory = $container->get('random_location_sensor_node_factory');
 
 /** @var NetworkRunner $networkRunner */
 $networkRunner = $container->get('network_runner');
@@ -45,35 +46,38 @@ $networkRunner = $container->get('network_runner');
 /** @var NetworkExporter $networkExporter */
 $networkExporter = $container->get('network_exporter');
 
-/** @var Node[] $nodes */
-$nodes = [];
+/** @var SensorNode[] $sensorNodes */
+$sensorNodes = [];
 
-for ($i = 0; $i < NODES_COUNT; $i++) {
-    $node = $nodeFactory->create(FIELD_SIZE_X, FIELD_SIZE_Y);
+for ($i = 0; $i < $container->getParameter('sensor_nodes_count'); $i++) {
+    $sensorNode = $nodeFactory->create(
+        $container->getParameter('field_size.x'),
+        $container->getParameter('field_size.y')
+    );
 
-    $nodes[] = $node;
+    $sensorNodes[] = $sensorNode;
 }
 
 $console->writeln(
     sprintf(
-        '<info>Starting wireless sensor network modelling. Nodes count: %s. Field size: %s x %s meters.</info>',
-        number_format(NODES_COUNT, 0, '', ' '),
-        number_format(FIELD_SIZE_X, 0, '', ' '),
-        number_format(FIELD_SIZE_Y, 0, '', ' ')
+        '<info>Starting wireless sensor network modelling. Sensor nodes count: %s. Field size: %s x %s meters.</info>',
+        number_format($container->getParameter('sensor_nodes_count'), 0, '', ' '),
+        number_format($container->getParameter('field_size.x'), 0, '', ' '),
+        number_format($container->getParameter('field_size.y'), 0, '', ' ')
     )
 );
 
 $console->writeln(
     sprintf(
-        '<info>0 rounds passed. Dead nodes: %d/%s. Total charge: %s.</info>',
+        '<info>0 rounds passed. Dead sensor nodes: %d/%s. Total charge: %s.</info>',
         0,
-        number_format(NODES_COUNT, 0, '', ' '),
+        number_format($container->getParameter('sensor_nodes_count'), 0, '', ' '),
         (float) array_sum(
             array_map(
-                function (Node $node) {
-                    return $node->getCharge();
+                function (SensorNode $sensorNode) {
+                    return $sensorNode->getCharge();
                 },
-                $nodes
+                $sensorNodes
             )
         )
     )
@@ -84,9 +88,9 @@ $baseStation = $container->get('base_station');
 
 $firstExport = true;
 
-while ($isAlive = $networkRunner->run($baseStation, $nodes)) {
+while ($isAlive = $networkRunner->run($baseStation, $sensorNodes)) {
     $baseStation = null;
-    $nodes       = [];
+    $sensorNodes = [];
 
     $network = $networkRunner->getNetwork();
     $rounds  = $networkRunner->getRounds();
@@ -97,11 +101,11 @@ while ($isAlive = $networkRunner->run($baseStation, $nodes)) {
 
     $console->writeln(
         sprintf(
-            '<info>%s %s passed. Dead nodes: %s/%s. Total charge: %s.</info>',
+            '<info>%s %s passed. Dead sensor nodes: %s/%s. Total charge: %s.</info>',
             number_format($rounds, 0, '', ' '),
             Util::pluralForm($rounds, 'round', 'rounds', 'rounds'),
-            number_format(NODES_COUNT - $network->getNodesCount(), 0, '', ' '),
-            number_format(NODES_COUNT, 0, '', ' '),
+            number_format($container->getParameter('sensor_nodes_count') - $network->getSensorNodesCount(), 0, '', ' '),
+            number_format($container->getParameter('sensor_nodes_count'), 0, '', ' '),
             (float) $network->getTotalCharge()
         )
     );

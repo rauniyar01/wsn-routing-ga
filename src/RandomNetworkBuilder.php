@@ -4,62 +4,60 @@ namespace Podorozhny\Dissertation;
 
 use Assert\Assertion;
 
-class RandomNetworkBuilder implements NetworkBuilder
+final class RandomNetworkBuilder implements NetworkBuilder
 {
     const CLUSTER_HEADS_RATIO = 0.1;
 
-    /**
-     * {@inheritdoc}
-     */
-    public function build(BaseStation $baseStation, array $nodes)
+    /** {@inheritdoc} */
+    public function build(BaseStation $baseStation, array $sensorNodes)
     {
-        /** @var Node[] $nodes */
+        /** @var SensorNode[] $sensorNodes */
+        Assertion::allIsInstanceOf($sensorNodes, SensorNode::class);
 
-        Assertion::allIsInstanceOf($nodes, Node::class);
-
-        $nodes = array_filter(
-            $nodes,
-            function (Node $node) {
-                return !$node->isDead();
+        $sensorNodes = array_filter(
+            $sensorNodes,
+            function (SensorNode $sensorNode) {
+                return !$sensorNode->isDead();
             }
         );
 
-        $nodesCount = count($nodes);
+        $sensorNodesCount = count($sensorNodes);
 
-        if ($nodesCount === 0) {
+        if ($sensorNodesCount === 0) {
             return false;
         }
 
-        $clusterHeadsCount = ceil($nodesCount * self::CLUSTER_HEADS_RATIO);
+        $clusterHeadsCount = ceil($sensorNodesCount * self::CLUSTER_HEADS_RATIO);
 
-        $keys = array_keys($nodes);
+        $keys = array_keys($sensorNodes);
 
         Util::shuffle($keys);
 
         $tmp = [];
 
         foreach ($keys as $id) {
-            $tmp[$id] = $nodes[$id];
+            $tmp[$id] = $sensorNodes[$id];
         }
 
-        $nodes = $tmp;
+        $sensorNodes = $tmp;
 
         // Random cluster heads
-        $clusterHeads = array_slice($nodes, 0, $clusterHeadsCount);
+        /** @var SensorNode[] $clusterHeads */
+        $clusterHeads = array_slice($sensorNodes, 0, $clusterHeadsCount);
 
-        /** @var Node[] $clusterNodes */
+        /** @var SensorNode[] $clusterNodes */
         $clusterNodes = [];
 
-        foreach ($nodes as $node) {
-            if (false !== array_search($node, $clusterHeads, true)) {
-                $node->makeClusterHead();
+        foreach ($sensorNodes as $sensorNode) {
+            if (false !== array_search($sensorNode, $clusterHeads, true)) {
+                $sensorNode->makeClusterHead();
 
                 continue;
             }
 
-            $node->makeClusterNode($node->getNearestNeighbor($clusterHeads));
+            $sensorNode->makeClusterNode($sensorNode->getNearestNeighbor($clusterHeads));
 
-            $clusterNodes[] = $node;
+            $clusterNodes[] = $sensorNode;
         }
 
         return new Network($baseStation, $clusterHeads, $clusterNodes);

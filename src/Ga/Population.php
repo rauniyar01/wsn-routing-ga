@@ -2,12 +2,8 @@
 
 namespace Podorozhny\Dissertation\Ga;
 
-use Assert\Assert;
-
-class Population
+final class Population
 {
-    const SIZE = 20;
-
     /** @var Genotype[] */
     private $genotypes;
 
@@ -16,7 +12,7 @@ class Population
 
     public function __construct(array $genotypes)
     {
-        $this->setGenotypes($genotypes);
+        $this->genotypes = $genotypes;
     }
 
     /**
@@ -26,25 +22,18 @@ class Population
      */
     public function setGenotypes(array $genotypes): self
     {
-        Assert::that(count($genotypes))->eq(self::SIZE);
-        Assert::thatAll($genotypes)->isInstanceOf(Genotype::class);
-
         $this->genotypes = $genotypes;
 
         return $this;
     }
 
-    /**
-     * @return Genotype[]
-     */
+    /** @return Genotype[] */
     public function getGenotypes(): array
     {
         return $this->genotypes;
     }
 
-    /**
-     * @return Population
-     */
+    /** @return Population */
     public function incrementGenerationNumber(): self
     {
         $this->generationNumber++;
@@ -52,17 +41,13 @@ class Population
         return $this;
     }
 
-    /**
-     * @return int
-     */
+    /** @return int */
     public function getGenerationNumber(): int
     {
         return $this->generationNumber;
     }
 
-    /**
-     * @return Genotype
-     */
+    /** @return Genotype */
     public function getBestGenotype(): Genotype
     {
         return reset($this->genotypes);
