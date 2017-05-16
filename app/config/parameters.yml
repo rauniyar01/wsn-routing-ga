@@ -7,9 +7,9 @@ parameters:
     iterations_per_round: 10
     genetic.generations_limit: 20
     genetic.population_size: 100
-    genetic.fitness_goal: '1.0'
-    genetic.elite_genotype_rate: '0.1'
-    genetic.crossover_rate: '0.6'
-    genetic.mutation_rate: '0.03'
-    genetic.initial_cluster_heads_ratio_min: '0.025'
-    genetic.initial_cluster_heads_ratio_max: '0.1'
+    genetic.fitness_goal: 1.0
+    genetic.elite_genotype_rate: 0.1
+    genetic.crossover_rate: 0.6
+    genetic.mutation_rate: 0.03
+    genetic.initial_cluster_heads_ratio_min: 0.025
+    genetic.initial_cluster_heads_ratio_max: 0.1
